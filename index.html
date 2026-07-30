@@ -36,11 +36,14 @@
   /* form */
   --hit:22px;            /* every circular control */
   --row:46px;            /* every row */
-  --indent:22px;
+  --indent:18px;
   --caret-w:28px;  --caret-pull:8px;  --row-gap:18px;
   /* exactly where the tick's left edge lands. the cue and the tray both hang
      off this same line, so they can never drift apart again. */
   --body:calc(var(--caret-w) - var(--caret-pull) + var(--row-gap));
+  /* where the title text begins — the cue hangs off this, since it is the
+     title's own second line */
+  --textx:calc(var(--body) + var(--hit) + var(--row-gap));
 
   /* breathing, by how far you are from where you're standing.
      elders get air. descendants get closeness. */
@@ -117,7 +120,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
   margin:0 0 var(--s4);outline:none;color:var(--ink)}
 
 /* ---------- tree ---------- */
-.kids .kids{margin-left:11px;padding-left:var(--indent);position:relative;
+.kids .kids{margin-left:8px;padding-left:var(--indent);position:relative;
   padding-top:var(--s1);padding-bottom:var(--s2)}
 .kids .kids::before{content:'';position:absolute;left:0;top:0;bottom:6px;width:1px;background:var(--guide)}
 
@@ -200,8 +203,8 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .row.today .t{font-weight:500}
 .row.late .t{color:var(--late)}
 
-.note{padding:0 0 0 var(--body);margin-top:0;font-size:calc(12.5px*var(--fs));color:var(--faint);
-  line-height:1.4;outline:none;max-width:52ch}
+.note{padding:0 44px 0 var(--textx);margin-top:0;font-size:calc(12.5px*var(--fs));color:var(--faint);
+  line-height:1.4;outline:none;max-width:52ch;overflow-wrap:anywhere}
 /* a line that carries a cue gives up its own bottom padding, so the cue sits
    close to its parent — but never close to the marks that wrapped above it. */
 .hasnote>.row{padding-bottom:1px}
@@ -234,12 +237,18 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .done>.row .tick svg{stroke-dashoffset:0}
 
 /* ---------- controls under the row ---------- */
-.ctl{padding:2px 0 var(--s3) var(--body);animation:fade .2s var(--ease)}
-.ctl .line{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ctl{padding:2px 0 var(--s3) var(--body);animation:fade .2s var(--ease);position:relative}
+.shut{position:absolute;right:5px;top:-34px;width:34px;height:34px;border-radius:var(--rp);
+  color:var(--faint);display:grid;place-items:center;font-size:13px;background:var(--hair);
+  transition:color .2s,background .2s}
+.shut::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:var(--rp)}
+.shut:hover{color:var(--ink);background:#2a241c1a}
+.ctl .line{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .ctl .line+.line{margin-top:6px}
 .foot .key{color:var(--dim);font-weight:500}
 @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
-.cb{padding:12px 13px;border-radius:var(--rp);min-height:44px;display:inline-flex;
+.cb{padding:12px 10px;border-radius:var(--rp);min-height:44px;display:inline-flex;
   align-items:center;font-size:calc(var(--t-ctl)*var(--fs));
   color:var(--dim);background:var(--hair);white-space:nowrap;
   transition:background .16s,color .16s,transform .14s var(--spring)}
@@ -253,7 +262,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
   align-items:stretch}
 .pad button:first-child{border-radius:var(--rp) 0 0 var(--rp)}
 .pad button:last-child{border-radius:0 var(--rp) var(--rp) 0}
-.pad button{padding:13px 15px;line-height:0;color:var(--dim);min-height:44px;min-width:44px;
+.pad button{padding:13px 12px;line-height:0;color:var(--dim);min-height:44px;min-width:42px;
   display:flex;align-items:center;justify-content:center;
   transition:background .16s,color .16s}
 .mv{width:20px;height:15px;display:block;fill:currentColor;stroke:currentColor;
@@ -263,8 +272,9 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .pad button:hover{background:#2a241c14;color:var(--ink)}
 .pad button:active{background:#2a241c22}
 .pad .sp{width:1px;background:#2a241c14;flex:none}
-.pad .bin{font-size:13px;padding:8px 11px;color:var(--faint)}
+.pad .bin{font-size:13px;color:var(--faint)}
 .pad .bin:hover{background:color-mix(in srgb,var(--late) 14%,transparent);color:var(--late)}
+
 .cb.del{color:var(--late);background:transparent;padding:12px 12px;margin-left:auto}
 .cbv{margin-left:5px;font-size:.92em}
 .sw{width:13px;height:13px;border-radius:var(--rp);display:inline-block;vertical-align:-2px}
@@ -428,12 +438,16 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .sheet{position:fixed;inset:0;z-index:60;background:#0006;display:none;
   align-items:flex-end;justify-content:center}
 .sheet.on{display:flex}
-.sin{width:100%;max-width:620px;background:var(--paper);border-radius:var(--r3) var(--r3) 0 0;
+.sin{width:100%;max-width:620px;max-height:86dvh;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  background:var(--paper);border-radius:var(--r3) var(--r3) 0 0;
   padding:var(--s4) var(--s5) calc(env(safe-area-inset-bottom) + var(--s5));
   animation:up .3s var(--ease)}
 @keyframes up{from{transform:translateY(28px);opacity:.5}to{transform:none;opacity:1}}
-.grip{width:36px;height:4px;border-radius:var(--rp);background:var(--hair);margin:0 auto var(--s3)}
-.shead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
+.grip{width:36px;height:4px;border-radius:var(--rp);background:var(--hair);margin:0 auto var(--s3);
+  position:sticky;top:0;z-index:3}
+.shead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3);
+  position:sticky;top:0;background:var(--paper);padding-bottom:var(--s2);z-index:2}
 .shead h3{margin:0;flex:1}
 .sx{width:40px;height:40px;border-radius:var(--rp);background:var(--hair);color:var(--dim);
   display:grid;place-items:center;font-size:15px;flex:none;position:relative}
@@ -501,7 +515,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
     becomes a project.<br>
     <span class="key">⏱</span> urgent · <span class="key">Imp</span> important ·
     <span class="key">📅</span> a day · <span class="key">↻</span> repeats ·
-    <span class="key">⬤</span> colour
+    <span class="key">⬤</span> colour<br>
+    Swipe sideways to move between Map and Do.
   </div>
 </main>
 
@@ -703,7 +718,8 @@ function rowEl(node,parent,depth){
   const car=document.createElement('button');
   car.className='caret'+(has?'':' none')+(has&&!node.collapsed?' open':'');
   car.innerHTML='&#9656;';car.tabIndex=-1;
-  car.onclick=e=>{e.stopPropagation();node.collapsed=!node.collapsed;render()};
+  car.onclick=e=>{e.stopPropagation();
+    node.collapsed=!node.collapsed;openId=null;render()};
 
   const tick=document.createElement('button');
   tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
@@ -721,7 +737,11 @@ function rowEl(node,parent,depth){
      appears when you actually mean to type. */
   tx.contentEditable = (openId===node.id)?'true':'false';
   tx.onclick=e=>{
-    if(openId!==node.id){e.preventDefault();openId=node.id;render()}
+    if(openId!==node.id){
+      e.preventDefault();openId=node.id;render();
+      /* nothing written yet? then you meant to write. skip the second tap. */
+      if(!node.t)focus(node.id);
+    }
   };
   tx.oninput=()=>{node.t=tx.textContent;saveSoon()};
   tx.onkeydown=e=>key(e,node,parent);
@@ -774,7 +794,7 @@ function rowEl(node,parent,depth){
     if(node.note||openId===node.id)wrap.appendChild(nt);
   }
 
-  if(openId===node.id)wrap.appendChild(ctlEl(node,parent));
+  if(openId===node.id)wrap.appendChild(ctlEl(node,parent,depth));
   if(has&&!node.collapsed){
     const kb=kidsEl(node,depth+1);
     ghost(kb,node);          /* every open branch offers its own next line */
@@ -783,8 +803,20 @@ function rowEl(node,parent,depth){
   return wrap;
 }
 
-function ctlEl(node,parent){
+function ctlEl(node,parent,depth){
   const c=document.createElement('div');c.className='ctl';
+  /* the close sits up at the end of the cue line, well away from the bin.
+     two small controls that do very different things should not touch. */
+  const shut=document.createElement('button');
+  shut.className='shut';shut.innerHTML='&#10005;';
+  shut.title='Close';shut.setAttribute('aria-label','Close');
+  shut.onmousedown=e=>e.preventDefault();
+  shut.onclick=e=>{e.stopPropagation();openId=null;render()};
+  c.appendChild(shut);
+  /* a tray is a tool, not content. it steps back out of the indentation so it
+     sits in the same place whatever depth you are working at. */
+  const STEP=26;
+  if(depth>1)c.style.marginLeft=(-(depth-1)*STEP)+'px';
   const l1=document.createElement('div');l1.className='line';
   const l2=document.createElement('div');l2.className='line';
 
@@ -802,7 +834,8 @@ function ctlEl(node,parent){
       const i=parent.kids.indexOf(node),copy=node;
       if(chain(zoom).some(a=>a.id===node.id))zoom=parent.id;   /* walk out first */
       parent.kids.splice(i,1);openId=null;render();
-      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy)})},'bin']]
+      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy)})},'bin'],
+   ]
    .forEach(([html,lbl,fn,cls])=>{
      if(html==='sp'){pad.appendChild(Object.assign(document.createElement('div'),{className:'sp'}));return}
      const b=document.createElement('button');b.innerHTML=html;b.title=lbl;
@@ -811,12 +844,6 @@ function ctlEl(node,parent){
      b.onmousedown=e=>e.preventDefault();
      b.onclick=e=>{e.stopPropagation();fn()};pad.appendChild(b)});
   l1.appendChild(pad);
-  const x=document.createElement('button');
-  x.className='cb x';x.innerHTML='&#10005;';x.title='Close';x.setAttribute('aria-label','Close');
-  x.onmousedown=e=>e.preventDefault();
-  x.onclick=e=>{e.stopPropagation();openId=null;render()};
-  x.style.marginLeft='auto';
-  l1.appendChild(x);
   host=l2;
   const lab2=label(node.when);
   mk('&#9200;', node.urgent?'set urg':'sym',
@@ -1301,7 +1328,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 9</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 10</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
@@ -1346,6 +1373,10 @@ const SLIDES=[
    p:'A line that knows <b>when and where</b> gets done far more often than one that '+
      'only knows what. Drop a cue: <i>at my desk</i>, <i>in the kitchen</i>, '+
      '<i>on the way home</i>.'},
+  {m:'\u21C4', h:'Two ways to look',
+   p:'<b>Map</b> is for thinking \u2014 nesting, moving, breaking things down. '+
+     '<b>Do</b> is for finishing. Tap the switch at the top, or just '+
+     '<b>swipe sideways</b>.'},
   {m:'\u23F1', h:'Then just do things',
    p:'Mark a line <b>\u23F1 urgent</b> or <b>Imp</b>ortant, or give it a day, and it turns up '+
      'in <b>Do</b> \u2014 with one thing at the top, and why it was chosen.'}
@@ -1412,6 +1443,27 @@ function paintCoach(){
 }
 window.addEventListener('resize',()=>{
   if(document.getElementById('coach').classList.contains('on'))paintCoach()});
+
+/* ---------- swipe sideways to change mode ---------- */
+(function(){
+  let x0=0,y0=0,live=false;
+  const main=document.querySelector('main');
+  main.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    const t=e.target;
+    /* never steal the gesture from text, the tray, a sheet or a scroller */
+    if(t.closest('[contenteditable="true"]')||t.closest('.ctl')||t.closest('.sheet')
+       ||t.closest('.pad')||t.closest('.lens')||t.closest('#modes'))return;
+    x0=e.touches[0].clientX;y0=e.touches[0].clientY;live=true;
+  },{passive:true});
+  main.addEventListener('touchend',e=>{
+    if(!live)return;live=false;
+    const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0;
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;
+    const want=dx<0?'do':'map';
+    if(want!==mode){mode=want;openId=null;save();render();buzz(8)}
+  },{passive:true});
+})();
 
 /* ---------- back button: on Android and in the browser ---------- */
 function goTo(id,push){
