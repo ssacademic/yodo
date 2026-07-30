@@ -95,11 +95,12 @@ main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow
   margin:0 calc(-1 * var(--s5)) var(--s4);
   padding:calc(env(safe-area-inset-top) + var(--s3)) var(--s5) var(--s2);
   border-bottom:1px solid var(--hair)}
-.bar1{display:flex;align-items:center;gap:var(--s2)}
+.bar1{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s2)}
+.bar1 .icons{display:flex;gap:var(--s2);justify-self:end}
 .bar2{display:flex;align-items:center;gap:12px;margin-top:2px;min-height:30px}
 .brand{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
   font-weight:400;font-size:calc(16px*var(--fs));letter-spacing:.055em;
-  margin-right:auto;color:var(--faint);text-transform:lowercase;
+  color:var(--faint);text-transform:lowercase;
   transition:color .25s}
 .brand:hover{color:var(--dim)}
 .back{width:30px;height:30px;border-radius:var(--rp);color:var(--dim);display:grid;
@@ -498,8 +499,10 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
         <button data-m="map" class="on">Map</button>
         <button data-m="do">Do</button>
       </div>
-      <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
-      <button class="ico" id="gear" aria-label="Look">⚙</button>
+      <div class="icons">
+        <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
+        <button class="ico" id="gear" aria-label="Look">⚙</button>
+      </div>
     </div>
     <div class="bar2" id="bar2">
       <div class="crumbs" id="crumbs"></div>
@@ -626,6 +629,94 @@ function label(ms){
   return{txt:new Date(ms).toLocaleDateString(undefined,{day:'numeric',month:'short'}),cls:''};
 }
 
+/* ============================================================
+   MERGEABLE — the part that has to exist before any sync does.
+   A tree does not merge on its own: last-write-wins on a whole
+   document silently destroys whatever the other device did.
+   So: every node carries its own clock, deletions leave a mark,
+   and nothing is ever dropped for being an orphan.
+   ============================================================ */
+var DEVICE=(function(){
+  try{
+    let d=localStorage.getItem('yodo.device');
+    if(!d){d='d'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+      localStorage.setItem('yodo.device',d)}
+    return d;
+  }catch(e){return 'd-local'}
+})();
+
+/* deletions leave a mark, or they come back on the next merge */
+var GONE=(function(){try{return JSON.parse(localStorage.getItem('yodo.gone')||'{}')}catch(e){return {}}})();
+function markGone(id){
+  GONE[id]=Date.now();
+  /* keep it small: a tombstone older than 90 days has done its job */
+  const cut=Date.now()-90*DAY;
+  for(const k in GONE)if(GONE[k]<cut)delete GONE[k];
+  try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
+}
+function killNode(node,parent){
+  const i=parent.kids.indexOf(node);
+  if(i<0)return -1;
+  (function mark(n){markGone(n.id);n.kids.forEach(mark)})(node);
+  parent.kids.splice(i,1);
+  return i;
+}
+
+/* flat form: every node knows its own parent and place */
+function flatten(root){
+  const out=[];
+  (function walk(n,parent,i){
+    n.kids.forEach((k,idx)=>{
+      out.push(Object.assign({},k,{kids:undefined,_p:n.id,_o:(k.ord!=null?k.ord:idx*100)}));
+      walk(k,n,idx);
+    });
+  })(root,null,0);
+  return out;
+}
+function rebuild(rows,rootId,rootTitle){
+  const byId={},root={id:rootId,t:rootTitle||'Everything',kids:[],done:false,collapsed:false};
+  byId[rootId]=root;
+  rows.forEach(r=>{byId[r.id]=Object.assign({},r,{kids:[]});delete byId[r.id].kids0});
+  rows.forEach(r=>{
+    const me=byId[r.id];
+    let p=byId[r._p];
+    if(!p)p=root;                       /* an orphan joins the root, never vanishes */
+    p.kids.push(me);
+  });
+  (function sort(n){n.kids.sort((a,b)=>(a._o||0)-(b._o||0));
+    n.kids.forEach(k=>{delete k._p;delete k._o;sort(k)})})(root);
+  return root;
+}
+
+/* the merge itself: newest edit wins per node, a deletion beats an older edit */
+function mergeTrees(mine,theirs){
+  const A=flatten(mine.tree||mine), B=flatten(theirs.tree||theirs);
+  const gone=Object.assign({},mine.gone||{},{});
+  const tg=theirs.gone||{};
+  for(const k in tg)gone[k]=Math.max(gone[k]||0,tg[k]);
+
+  const keep={},stat={fromMine:0,fromTheirs:0,deleted:0,reattached:0};
+  const consider=(row,side)=>{
+    const cur=keep[row.id];
+    if(!cur||(row.touched||0)>(cur.touched||0)){keep[row.id]=row;
+      if(side==='mine')stat.fromMine++;else stat.fromTheirs++}
+  };
+  A.forEach(r=>consider(r,'mine'));
+  B.forEach(r=>consider(r,'theirs'));
+
+  const rows=[];
+  for(const id in keep){
+    const r=keep[id];
+    if(gone[id]&&gone[id]>=(r.touched||0)){stat.deleted++;continue}
+    rows.push(r);
+  }
+  const alive={};rows.forEach(r=>alive[r.id]=1);
+  const rootId=(mine.tree||mine).id;
+  rows.forEach(r=>{if(r._p!==rootId&&!alive[r._p]){r._p=rootId;stat.reattached++}});
+
+  return {tree:rebuild(rows,rootId,(mine.tree||mine).t),gone:gone,stat:stat};
+}
+
 /* ---------- getting your list out of here ---------- */
 function dl(name,text,type){
   const b=new Blob([text],{type:type||'text/plain'});
@@ -670,7 +761,7 @@ document.getElementById('undo-b').onclick=()=>{
 function render(){
   document.getElementById('tree').style.display   = mode==='map'?'':'none';
   document.getElementById('dolist').style.display = mode==='do' ?'':'none';
-  document.getElementById('fold').style.display   = mode==='map'?'':'none';
+  document.getElementById('fold').style.visibility = mode==='map'?'':'hidden';
   document.querySelectorAll('#modes button').forEach(b=>
     b.classList.toggle('on',b.dataset.m===mode));
   document.getElementById('bar2').style.display = mode==='do'?'none':'';
@@ -831,10 +922,13 @@ function ctlEl(node,parent,depth){
   [[ICO.out,'Out',()=>run('Tab',true)],[ICO.in,'In',()=>run('Tab',false)],['sp'],
    [ICO.up,'Up',()=>shift(node,parent,-1)],[ICO.down,'Down',()=>shift(node,parent,1)],['sp'],
    ['&#128465;','Delete',()=>{
-      const i=parent.kids.indexOf(node),copy=node;
+      const copy=node;
       if(chain(zoom).some(a=>a.id===node.id))zoom=parent.id;   /* walk out first */
-      parent.kids.splice(i,1);openId=null;render();
-      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy)})},'bin'],
+      const i=killNode(node,parent);
+      openId=null;render();
+      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy);
+        (function un(n){delete GONE[n.id];n.kids.forEach(un)})(copy);
+        try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}})},'bin'],
    ]
    .forEach(([html,lbl,fn,cls])=>{
      if(html==='sp'){pad.appendChild(Object.assign(document.createElement('div'),{className:'sp'}));return}
@@ -914,7 +1008,7 @@ function key(e,node,parent){
     }
   }
   if(e.key==='Backspace'&&!node.t&&!node.kids.length){e.preventDefault();
-    parent.kids.splice(i,1);openId=null;render();
+    killNode(node,parent);openId=null;render();
     if(parent.kids[i-1])focus(parent.kids[i-1].id)}
 }
 function run(k,shift){
@@ -1283,6 +1377,12 @@ document.getElementById('gear').onclick=()=>{
   row('Typeface',[['Sans',"'Instrument Sans'"],['Serif',"'Newsreader'"]],
     ()=>getComputedStyle(document.documentElement).getPropertyValue('--ff').trim(),
     v=>{document.documentElement.style.setProperty('--ff',v);save()});
+  sin.insertAdjacentHTML('beforeend',
+    '<div style="font-size:12px;color:var(--faint);margin-top:8px;line-height:1.55">'+
+    '<b>Merge</b> folds another device\u2019s backup into this one \u2014 newest change '+
+    'per line wins, nothing is lost. <b>Restore</b> replaces everything. '+
+    'This device is <code>'+DEVICE+'</code>.</div>');
+
   sin.insertAdjacentHTML('beforeend','<div class="lbl">Cues</div>');
   const cq=document.createElement('div');cq.className='opts';
   [['Ask me every time',true],['Only when I want to',false]].forEach(([l,v])=>{
@@ -1301,12 +1401,36 @@ document.getElementById('gear').onclick=()=>{
   const mkio=(label,fn)=>{const b=document.createElement('button');b.className='opt';
     b.textContent=label;b.onclick=ev=>{ev.stopPropagation();fn()};io.appendChild(b)};
   mkio('Back up (.json)',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.json',
-    JSON.stringify({tree:ROOT,uid,saved:new Date().toISOString()},null,2),'application/json'));
+    JSON.stringify({tree:ROOT,uid,gone:GONE,device:DEVICE,
+      saved:new Date().toISOString(),v:2},null,2),'application/json'));
   mkio('As plain text',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.txt',
     asText(),'text/plain'));
   mkio('Copy outline',()=>{navigator.clipboard&&navigator.clipboard.writeText(asText())
     .then(()=>toastLine('Copied.'),()=>toastLine('Could not copy.'))});
   mkio('Print / save as PDF',()=>{sheet.classList.remove('on');setTimeout(()=>window.print(),250)});
+  mkio('Merge a backup',()=>{
+    const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
+    f.onchange=()=>{const r=new FileReader();
+      r.onload=()=>{try{
+        const d=JSON.parse(r.result);
+        if(!d||!(d.tree&&d.tree.kids))throw 0;
+        const before=JSON.parse(JSON.stringify(ROOT));
+        const beforeGone=JSON.parse(JSON.stringify(GONE));
+        const out=mergeTrees({tree:ROOT,gone:GONE},{tree:d.tree,gone:d.gone||{}});
+        for(const k in ROOT)delete ROOT[k];
+        Object.assign(ROOT,out.tree);
+        for(const k in GONE)delete GONE[k];
+        Object.assign(GONE,out.gone);
+        try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
+        zoom=ROOT.id;openId=null;save();shutSheet();render();
+        offerUndo('Merged \u00b7 '+out.stat.fromTheirs+' newer from the file, '+
+          out.stat.deleted+' removed',
+          'Undo',()=>{for(const k in ROOT)delete ROOT[k];Object.assign(ROOT,before);
+            for(const k in GONE)delete GONE[k];Object.assign(GONE,beforeGone);
+            save();render()});
+      }catch(e){toastLine('That file did not read.')}};
+      r.readAsText(f.files[0])};
+    f.click()});
   mkio('Restore a backup',()=>{
     const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
     f.onchange=()=>{const r=new FileReader();
@@ -1328,7 +1452,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 10</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 11</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
