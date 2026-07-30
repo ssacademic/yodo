@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yodo</title>
+<meta name="description" content="An outline you can tick off. Everything is a line; a line becomes a project the moment it gets parts.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#F7F2E7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Yodo">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..600,0..100,0..1&family=Instrument+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THE DESIGN SYSTEM.  Every colour, size, radius and space lives
+   here and nowhere else. No value gets typed inline again.
+   ============================================================ */
+:root{
+  /* paper */
+  --bg:#F7F2E7; --paper:#FEFCF6;
+  --ink:#2A241C; --dim:#7C7263; --faint:#B2A796;
+  --hair:#2a241c12; --guide:#2a241c0d;
+  --acc:#C2611F; --late:#B0402F;
+
+  /* space — a 4px scale, nothing off it */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:22px; --s6:32px;
+
+  /* radius */
+  --r1:8px; --r2:14px; --r3:20px; --rp:999px;
+
+  /* form */
+  --hit:20px;            /* every circular control */
+  --row:46px;            /* every row */
+  --indent:22px;
+
+  /* breathing, by how far you are from where you're standing.
+     elders get air. descendants get closeness. */
+  --air-1:30px;          /* above an elder that holds things */
+  --air-1s:10px;         /* above an elder that holds nothing */
+  --air-2:14px;
+  --air-3:2px;
+
+  /* motion */
+  --spring:cubic-bezier(.34,1.7,.5,1);
+  --ease:cubic-bezier(.2,.9,.3,1);
+
+  /* type */
+  --fs:1; --ff:'Instrument Sans'; --fd:'Fraunces';
+  --t-row:17px; --t-d1:18px; --t-d2:16.5px; --t-deep:15.5px;
+  --t-mark:12.5px; --t-ctl:13px; --t-sub:13.5px;
+}
+[data-theme="light"]{--bg:#F7F7F8;--paper:#FFF;--ink:#1C1B1F;--dim:#6E6C74;--faint:#A6A3AC;
+  --hair:#1c1b1f12;--guide:#1c1b1f0d}
+[data-theme="dark"]{--bg:#15140F;--paper:#201F19;--ink:#EDE9DE;--dim:#9C9587;--faint:#6B6558;
+  --hair:#ffffff14;--guide:#ffffff0d;--acc:#D98040;--late:#E28270}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--ff),system-ui,sans-serif;
+  font-size:calc(16px*var(--fs));-webkit-font-smoothing:antialiased;
+  display:flex;justify-content:center;transition:background .35s,color .35s}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:var(--r1)}
+main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow-y:auto}
+
+/* ---------- head ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + var(--s3)) 0 var(--s2);
+  border-bottom:1px solid var(--hair);margin-bottom:var(--s4)}
+.bar1{display:flex;align-items:center;gap:var(--s2)}
+.bar2{display:flex;align-items:center;gap:6px;margin-top:6px;min-height:22px}
+.brand{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
+  font-weight:400;font-size:calc(16px*var(--fs));letter-spacing:.055em;
+  margin-right:auto;color:var(--faint);text-transform:lowercase;
+  transition:color .25s}
+.brand:hover{color:var(--dim)}
+.back{width:30px;height:30px;border-radius:var(--rp);color:var(--dim);display:grid;
+  place-items:center;font-size:16px;flex:none;transition:color .2s,background .2s,transform .16s var(--spring)}
+.back:hover{color:var(--ink);background:var(--hair)}
+.back:active{transform:scale(.88)}
+.back.off{opacity:.25;pointer-events:none}
+.crumbs{flex:1;min-width:0;display:flex;align-items:center;gap:var(--s1);flex-wrap:wrap;
+  font-size:calc(13px*var(--fs));color:var(--faint)}
+.crumbs button{color:var(--dim)}
+.crumbs button:hover{color:var(--ink);text-decoration:underline}
+.crumbs .sep{opacity:.4}
+.ico{width:32px;height:32px;border-radius:var(--rp);color:var(--faint);display:grid;
+  place-items:center;font-size:14px;flex:none;transition:color .2s,background .2s}
+.ico:hover{color:var(--ink);background:var(--hair)}
+h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
+  font-weight:600;font-size:calc(26px*var(--fs));letter-spacing:-.024em;line-height:1.14;
+  margin:0 0 var(--s4);outline:none;color:var(--ink)}
+
+/* ---------- tree ---------- */
+.kids .kids{margin-left:11px;padding-left:var(--indent);position:relative;
+  padding-top:var(--s1);padding-bottom:var(--s2)}
+.kids .kids::before{content:'';position:absolute;left:0;top:0;bottom:6px;width:1px;background:var(--guide)}
+
+.row{display:flex;align-items:flex-start;gap:10px;min-height:var(--row);
+  padding:var(--s2) 0;transition:opacity .35s}
+
+/* ---- sectioning. an elder that holds things reads as a heading. ---- */
+.d1{margin-top:var(--air-1s)}
+/* every branch gets a line above it and room to breathe.
+   so does the first loose line after a branch ends. */
+.d1.holds,
+.d1.holds + .d1:not(.holds){
+  border-top:1px solid var(--hair);
+  margin-top:var(--air-1);
+  padding-top:var(--s3);
+}
+.d1.holds>.row{padding-bottom:var(--s1)}
+.d1:first-child{margin-top:0;border-top:none;padding-top:0}
+.d2{margin-top:0}
+.d2.holds{margin-top:var(--air-2)}
+.d3,.d4{margin-top:var(--air-3)}
+.d3>.row,.d4>.row{padding:5px 0;min-height:36px}
+.d2>.row{padding:7px 0;min-height:42px}
+
+/* the guide fades as it goes deeper — closeness, not a cage */
+.kids .kids::before{background:linear-gradient(var(--guide),transparent 92%)}
+.d2 .kids::before{opacity:.6}
+.d3 .kids::before{opacity:.35}
+
+.caret{width:32px;height:34px;flex:none;display:grid;place-items:center;color:var(--dim);
+  font-size:18px;transition:transform .2s var(--ease),color .2s,background .2s;
+  opacity:1;margin-left:-8px;border-radius:var(--rp)}
+.caret:hover{background:var(--hair);color:var(--ink)}
+.caret:hover{color:var(--ink)}
+.caret.open{transform:rotate(90deg)}
+.caret.none{visibility:hidden}
+
+/* CIRCLE. one size, from the system. */
+.tick{width:var(--hit);height:var(--hit);flex:none;margin-top:2px;border-radius:var(--rp);
+  border:1.5px solid var(--faint);display:grid;place-items:center;
+  transition:transform .18s var(--spring),background .2s,border-color .2s}
+.tick svg{width:11px;height:11px;stroke:var(--paper);stroke-width:2.7;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:16;stroke-dashoffset:16;
+  transition:stroke-dashoffset .22s ease .04s}
+.tick:hover{border-color:var(--dim)}
+.tick:active{transform:scale(.82)}
+
+/* EVERY row has a way in. leaf = a dot. parent = a ring and a count.
+   this is how a to-do becomes a project. */
+.into{display:flex;align-items:center;gap:var(--s1);flex:none;color:var(--faint);
+  margin-top:1px;padding:2px 0 2px 3px;transition:color .2s,transform .18s var(--spring)}
+.into:hover{color:var(--acc)}
+.into:active{transform:scale(.88)}
+.into .n{font-size:calc(var(--t-mark)*var(--fs));font-variant-numeric:tabular-nums}
+.into svg{width:18px;height:18px;display:block}
+.into .prog{transform:rotate(-90deg)}
+.into circle{fill:none;stroke-width:2.4}
+.into .bg{stroke:currentColor;opacity:.3}
+.into .fg{stroke:var(--acc);transition:stroke-dashoffset .5s var(--ease)}
+.into .dot{fill:currentColor;opacity:.55;stroke:none}
+.into:hover .dot{opacity:1}
+
+/* depth changes SIZE only. never colour — an urgent thing three levels
+   down must not look like the least important thing on screen. */
+/* title and marks share one wrapping line. the title has a floor, so it can
+   never be squeezed into a vertical column of letters. */
+.main{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;
+  column-gap:12px;row-gap:2px}
+.t{flex:1 1 auto;min-width:15ch;outline:none;overflow-wrap:anywhere;min-height:1.4em;
+  font-size:calc(var(--t-row)*var(--fs));line-height:1.36;letter-spacing:-.005em}
+.t[contenteditable="true"]:empty::before{content:'\200b'}
+.d1>.row .t{font-size:calc(var(--t-d1)*var(--fs));font-weight:500}
+.d1.holds>.row .t{font-size:calc(20px*var(--fs));font-weight:600;letter-spacing:-.018em}
+.d2>.row .t{font-size:calc(var(--t-d2)*var(--fs))}
+.d2.holds>.row .t{font-weight:500}
+.d3>.row .t,.d4>.row .t{font-size:calc(var(--t-deep)*var(--fs));letter-spacing:0}
+
+/* a date changes the LINE */
+.row.today .t{font-weight:500}
+.row.late .t{color:var(--late)}
+
+.note{padding:0 0 0 47px;margin-top:0;font-size:calc(12.5px*var(--fs));color:var(--faint);
+  line-height:1.4;outline:none;max-width:52ch}
+/* a line that carries a cue gives up its own bottom padding, so the cue sits
+   close to its parent — but never close to the marks that wrapped above it. */
+.hasnote>.row{padding-bottom:1px}
+.hasnote>.row .marks{margin-bottom:5px}
+.note:focus{color:var(--dim)}
+.note::before{opacity:.7}
+.note:empty{display:none}
+.note[data-ph]:empty{display:block}
+.note[data-ph]:empty{font-size:calc(15px*var(--fs));color:var(--dim)}
+.note[data-ph]:empty::before{content:'where will you be when you do this?';color:var(--dim)}
+.note::before{content:'\21B3\00a0\00a0';color:var(--faint)}
+
+.note.edit{color:var(--ink)}
+.d3 .note,.d4 .note{font-size:calc(11.8px*var(--fs))}
+.done>.note{opacity:.34}
+
+.marks{display:flex;align-items:center;gap:var(--s3);flex:0 0 auto;margin-top:0}
+.marks:empty{display:none}
+.mk{font-size:calc(var(--t-mark)*var(--fs));color:var(--faint);white-space:nowrap}
+.mk.today{color:var(--acc);font-weight:500}
+.mk.late{color:var(--late);font-weight:500}
+.mk.rep::before{content:'↻ '}
+.flags{display:inline-flex;align-items:center;gap:5px}
+.mk.tap{cursor:pointer;padding:2px 3px;border-radius:5px;transition:background .15s}
+.mk.tap:hover{background:var(--hair)}
+.mk.urg{color:var(--late);font-weight:500}
+.mk.imp{color:var(--acc);font-weight:500}
+
+.done>.row{opacity:.34}
+.done>.row .t{text-decoration:line-through;text-decoration-thickness:1px}
+.done>.row .tick{background:var(--acc);border-color:var(--acc)}
+.done>.row .tick svg{stroke-dashoffset:0}
+
+/* ---------- controls under the row ---------- */
+.ctl{padding:2px 0 var(--s3) 33px;animation:fade .2s var(--ease)}
+.ctl .line{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ctl .line+.line{margin-top:6px}
+.foot .key{color:var(--dim);font-weight:500}
+@keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.cb{padding:7px 9px;border-radius:var(--rp);font-size:calc(var(--t-ctl)*var(--fs));
+  color:var(--dim);background:var(--hair);white-space:nowrap;
+  transition:background .16s,color .16s,transform .14s var(--spring)}
+.cb:active{transform:scale(.93)}
+.cb:hover{color:var(--ink)}
+.cb.set{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+.cb.set.urg{background:color-mix(in srgb,var(--late) 14%,transparent);color:var(--late)}
+.cb.set.late{background:color-mix(in srgb,var(--late) 14%,transparent);color:var(--late)}
+.cb.sym{padding:7px 10px;font-size:14px;line-height:1}
+.pad{display:flex;background:var(--hair);border-radius:var(--rp);overflow:hidden;flex:none}
+.pad button{padding:8px 10px;line-height:0;color:var(--dim);
+  transition:background .16s,color .16s}
+.mv{width:20px;height:15px;display:block;fill:currentColor;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mv path{fill:none}
+.pad button[aria-label="Up"] .mv,.pad button[aria-label="Down"] .mv{width:14px;height:19px}
+.pad button:hover{background:#2a241c14;color:var(--ink)}
+.pad button:active{background:#2a241c22}
+.pad .sp{width:1px;background:#2a241c14;flex:none}
+.pad .bin{font-size:13px;padding:8px 11px;color:var(--faint)}
+.pad .bin:hover{background:color-mix(in srgb,var(--late) 14%,transparent);color:var(--late)}
+.cb.del{color:var(--late);background:transparent;padding:7px 8px;margin-left:auto}
+.cbv{margin-left:5px;font-size:.92em}
+.sw{width:13px;height:13px;border-radius:var(--rp);display:inline-block;vertical-align:-2px}
+.sw.none{border:1.5px solid var(--faint);background:transparent}
+.opt.hue{display:flex;align-items:center;gap:8px;text-transform:capitalize}
+.cb.del:hover{background:color-mix(in srgb,var(--late) 12%,transparent)}
+.cb.x{background:transparent;color:var(--faint);padding:7px 7px;font-size:13px}
+
+.opening{color:var(--dim);font-size:calc(15px*var(--fs));line-height:1.65;
+  max-width:34ch;margin:0 0 var(--s5)}
+.ghost{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) 0;cursor:text;
+  opacity:.45;transition:opacity .2s}
+.ghost:hover{opacity:.9}
+.ghost .g{width:var(--hit);margin-left:27px;display:grid;place-items:center;flex:none}
+.ghost .g i{width:5px;height:5px;border-radius:var(--rp);background:var(--faint);display:block}
+.ghost span{font-size:calc(16px*var(--fs));color:var(--faint)}
+
+/* ---------- mode toggle ---------- */
+.modes{display:flex;background:var(--hair);border-radius:var(--rp);padding:2px;flex:none}
+.modes button{padding:6px 14px;border-radius:var(--rp);font-size:calc(12.5px*var(--fs));
+  color:var(--dim);letter-spacing:.02em;transition:background .22s,color .22s}
+.modes button.on{background:var(--paper);color:var(--ink);
+  box-shadow:0 1px 3px #2a241c1a;font-weight:500}
+
+/* ---------- DO: chronological, check-off only ---------- */
+.theone{background:var(--paper);border-radius:var(--r3);padding:var(--s5) var(--s5) var(--s4);
+  margin:var(--s4) 0 var(--s2);box-shadow:0 10px 30px -14px rgba(42,36,28,.35),0 1px 2px rgba(42,36,28,.06);
+  border-top:3px solid var(--acc)}
+.theone .lead{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc);
+  margin-bottom:var(--s3)}
+.theone .oanc{font-size:calc(11px*var(--fs));color:var(--faint);letter-spacing:.05em;margin-bottom:5px}
+.theone .otitle{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
+  font-weight:600;font-size:calc(24px*var(--fs));letter-spacing:-.024em;line-height:1.22}
+.theone .ocue{margin-top:var(--s2);font-size:calc(14px*var(--fs));color:var(--dim)}
+.theone .owhy{margin-top:var(--s3);font-size:calc(13px*var(--fs));color:var(--faint);font-style:italic}
+.theone .oact{display:flex;gap:var(--s2);margin-top:var(--s4);flex-wrap:wrap;align-items:center}
+.cb.pin{font-size:calc(12.5px*var(--fs));color:var(--faint);background:transparent;padding:7px 10px}
+.cb.pin:hover{color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.cb.pin.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 15%,transparent)}
+.theone .pinned{font-size:calc(11px*var(--fs));color:var(--acc);letter-spacing:.1em;
+  text-transform:uppercase;margin-top:var(--s2)}
+.go.big{padding:11px 22px;font-size:calc(14.5px*var(--fs))}
+
+.lens{display:flex;gap:2px;background:var(--hair);border-radius:var(--rp);padding:2px;
+  width:fit-content;margin:var(--s2) 0 0}
+.lens button{padding:6px 15px;border-radius:var(--rp);font-size:calc(12.5px*var(--fs));
+  color:var(--dim);transition:background .22s,color .22s}
+.lens button.on{background:var(--paper);color:var(--ink);font-weight:500;box-shadow:0 1px 3px #2a241c1a}
+.band{margin:var(--s6) 0 var(--s3)}
+.band:first-child{margin-top:var(--s2)}
+.band h2{font-family:var(--fd),Georgia,serif;font-weight:600;font-size:calc(15px*var(--fs));
+  letter-spacing:.02em;color:var(--dim);text-transform:lowercase}
+.band.now h2{color:var(--acc)}
+.band.late h2{color:var(--late)}
+
+.doit{padding:var(--s3) 0 var(--s4);border-bottom:1px solid var(--hair);transition:opacity .35s}
+.doit:last-child{border-bottom:none}
+/* the roots, tiny and quiet — they say where it came from, nothing more */
+.roots{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  font-size:calc(11px*var(--fs));color:var(--faint);letter-spacing:.05em;
+  margin-bottom:var(--s1);padding-left:33px}
+.roots .r{opacity:.75}
+.roots .r:last-child{opacity:1;color:var(--dim)}
+.roots .s{opacity:.4}
+.doline{display:flex;align-items:flex-start;gap:var(--s3)}
+.dotext{flex:1;min-width:0;font-size:calc(19px*var(--fs));line-height:1.3;font-weight:500;
+  letter-spacing:-.012em}
+.doit.done .dotext{text-decoration:line-through;text-decoration-thickness:1px}
+.doit.done{opacity:.34}
+.dometa{display:flex;align-items:center;gap:var(--s3);margin:var(--s2) 0 0 33px;flex-wrap:wrap}
+.dodate{font-size:calc(12.5px*var(--fs));color:var(--faint)}
+.dodate.late{color:var(--late);font-weight:500}
+.dodate.today{color:var(--acc);font-weight:500}
+.go{padding:7px 16px;border-radius:var(--rp);font-size:calc(13px*var(--fs));font-weight:500;
+  background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc);
+  transition:background .18s,transform .14s var(--spring)}
+.go:active{transform:scale(.93)}
+.donote{font-size:calc(13px*var(--fs));color:var(--dim);margin:var(--s1) 0 0 33px;max-width:52ch}
+.dostar{color:#D9A400;font-size:13px}
+
+/* ---------- focus ---------- */
+#focus{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:var(--s5);padding:var(--s5)}
+#focus.on{display:flex;animation:fin .35s var(--ease)}
+@keyframes fin{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+#focus .froots{font-size:calc(11.5px*var(--fs));color:var(--faint);letter-spacing:.06em;text-align:center}
+#focus .ftitle{font-family:var(--fd),Georgia,serif;font-weight:600;
+  font-size:calc(28px*var(--fs));letter-spacing:-.025em;text-align:center;max-width:20ch;line-height:1.2}
+.dial{position:relative;width:190px;height:190px;display:grid;place-items:center}
+.dial svg{position:absolute;inset:0;width:190px;height:190px;transform:rotate(-90deg)}
+.dial circle{fill:none;stroke-width:5}
+.dial .bg{stroke:var(--hair)}
+.dial .fg{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.dial b{font-size:calc(38px*var(--fs));font-weight:400;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em}
+#focus .frow{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:center}
+.fb{padding:12px 22px;border-radius:var(--rp);font-size:calc(14.5px*var(--fs));
+  background:var(--hair);color:var(--dim);transition:background .18s,transform .14s var(--spring)}
+.fb:active{transform:scale(.95)}
+.fb.done{background:var(--acc);color:var(--paper);font-weight:500}
+
+/* ---------- first run: a short introduction, then the real buttons ---------- */
+#intro{position:fixed;inset:0;z-index:200;background:var(--bg);display:none;
+  flex-direction:column;align-items:center;justify-content:center;padding:var(--s5);
+  text-align:center}
+#intro.on{display:flex}
+#intro .card{max-width:31ch;animation:fade .4s var(--ease)}
+#intro .mark{font-size:34px;margin-bottom:var(--s4);color:var(--acc);line-height:1}
+#intro h2{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
+  font-weight:600;font-size:calc(27px*var(--fs));letter-spacing:-.026em;line-height:1.18;
+  margin-bottom:var(--s3)}
+#intro p{color:var(--dim);font-size:calc(15.5px*var(--fs));line-height:1.65}
+#intro .demo{margin:var(--s5) auto 0;text-align:left;width:fit-content;
+  font-size:calc(14.5px*var(--fs));color:var(--dim);line-height:2}
+#intro .demo b{color:var(--ink);font-weight:500}
+#intro .demo .k{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:var(--hair);
+  padding:2px 6px;border-radius:5px;color:var(--ink)}
+#intro .demo .ind{padding-left:26px}
+#intro .foot2{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 26px);
+  display:flex;align-items:center;justify-content:center;gap:var(--s4);padding:0 var(--s5)}
+#intro .dots{display:flex;gap:6px}
+#intro .dots i{width:6px;height:6px;border-radius:var(--rp);background:var(--hair);transition:.25s}
+#intro .dots i.on{background:var(--acc);width:18px}
+#intro .skip{position:absolute;top:calc(env(safe-area-inset-top) + 18px);right:20px;
+  color:var(--faint);font-size:calc(13.5px*var(--fs))}
+.pill-btn{padding:12px 26px;border-radius:var(--rp);background:var(--acc);color:var(--paper);
+  font-size:calc(15px*var(--fs));font-weight:500;transition:transform .15s var(--spring)}
+.pill-btn:active{transform:scale(.95)}
+
+/* coach marks: the real button, lit up, with a line about it */
+#coach{position:fixed;inset:0;z-index:190;display:none}
+#coach.on{display:block}
+#spot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(20,16,10,.62);
+  transition:all .35s var(--ease);pointer-events:none}
+#tip{position:absolute;max-width:270px;background:var(--paper);border-radius:16px;
+  padding:15px 17px;box-shadow:0 14px 40px -12px rgba(20,16,10,.5);animation:fade .3s var(--ease)}
+#tip h4{font-family:var(--fd),Georgia,serif;font-weight:600;font-size:calc(16px*var(--fs));
+  letter-spacing:-.015em;margin-bottom:5px}
+#tip p{font-size:calc(13.5px*var(--fs));color:var(--dim);line-height:1.55}
+#tip .row2{display:flex;align-items:center;gap:var(--s3);margin-top:var(--s3)}
+#tip .n{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+#tip button{margin-left:auto;padding:8px 16px;border-radius:var(--rp);background:var(--acc);
+  color:var(--paper);font-size:calc(13px*var(--fs));font-weight:500}
+#tip .later{background:transparent;color:var(--faint);margin-left:0;padding:8px 4px}
+
+/* ---------- undo ---------- */
+#undo{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:70;
+  background:var(--ink);color:var(--bg);border-radius:var(--rp);
+  padding:11px var(--s2) 11px var(--s4);display:flex;align-items:center;gap:var(--s3);
+  font-size:calc(14px*var(--fs));opacity:0;pointer-events:none;
+  transition:.28s var(--spring);box-shadow:0 10px 30px -10px #2a241c66}
+#undo.on{opacity:.97;transform:translate(-50%,0);pointer-events:auto}
+#undo button{color:var(--acc);font-weight:500;padding:4px 10px;border-radius:var(--rp);
+  background:#ffffff1a}
+
+/* ---------- sheets ---------- */
+.sheet{position:fixed;inset:0;z-index:60;background:#0006;display:none;
+  align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sin{width:100%;max-width:620px;background:var(--paper);border-radius:var(--r3) var(--r3) 0 0;
+  padding:var(--s4) var(--s5) calc(env(safe-area-inset-bottom) + var(--s5));
+  animation:up .3s var(--ease)}
+@keyframes up{from{transform:translateY(28px);opacity:.5}to{transform:none;opacity:1}}
+.grip{width:36px;height:4px;border-radius:var(--rp);background:var(--hair);margin:0 auto var(--s4)}
+.sin h3{font-family:var(--fd),Georgia,serif;font-weight:600;font-size:calc(19px*var(--fs));
+  letter-spacing:-.02em;margin-bottom:var(--s3)}
+.opts{display:flex;gap:var(--s1);flex-wrap:wrap}
+.opt{padding:10px 16px;border-radius:var(--rp);font-size:calc(14px*var(--fs));
+  background:var(--hair);transition:background .18s,color .18s}
+.opt[aria-pressed="true"]{background:var(--acc);color:var(--paper)}
+.opt.clear{color:var(--late)}
+input[type=date]{width:100%;margin-top:var(--s3);background:var(--hair);border:none;
+  border-radius:var(--r2);padding:12px 14px;font:inherit;color:var(--ink);outline:none}
+.lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+  margin:var(--s4) 0 var(--s2)}
+.foot{margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--hair);
+  font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.75}
+kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--hair);
+  padding:2px 5px;border-radius:5px}
+@media print{
+  body{background:#fff;color:#000;display:block;overflow:visible}
+  main{max-width:none;height:auto;overflow:visible;padding:0}
+  .top,.ctl,.ghost,#undo,#focus,#coach,#intro,.sheet,.into,.caret,.lens,.foot{display:none!important}
+  h1{font-size:22pt;margin-bottom:12pt}
+  .row{padding:2pt 0;min-height:0;break-inside:avoid}
+  .t{font-size:11pt}
+  .d1>.row .t{font-size:13pt}
+  .note{color:#555;font-size:9pt}
+  .tick{border-color:#888}
+  .done>.row{opacity:1;color:#888}
+  .kids .kids{padding-left:16pt}
+  .kids .kids::before{background:#ddd}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
+</style>
+</head>
+<body data-theme="paper">
+<main>
+  <div class="top">
+    <div class="bar1">
+      <span class="brand">yodo</span>
+      <div class="modes" id="modes">
+        <button data-m="map" class="on">Map</button>
+        <button data-m="do">Do</button>
+      </div>
+      <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
+      <button class="ico" id="gear" aria-label="Look">⚙</button>
+    </div>
+    <div class="bar2">
+      <button class="back" id="back" aria-label="Up one level">&#8592;</button>
+      <div class="crumbs" id="crumbs"></div>
+    </div>
+  </div>
+  <h1 id="title" contenteditable="true" spellcheck="false"></h1>
+  <div id="tree"></div>
+  <div id="dolist"></div>
+  <div class="foot">
+    <kbd>Enter</kbd> new line · <kbd>Tab</kbd> tuck under · <kbd>⇧Tab</kbd> pull out ·
+    <kbd>⌫</kbd> on empty removes<br>
+    Every line has a dot on the right. Tap it to step inside — that is how a to-do
+    becomes a project.<br>
+    <span class="key">⏱</span> urgent · <span class="key">Imp</span> important ·
+    <span class="key">📅</span> a day · <span class="key">↻</span> repeats ·
+    <span class="key">⬤</span> colour
+  </div>
+</main>
+
+<div id="intro">
+  <button class="skip" id="in-skip">Skip</button>
+  <div class="card" id="in-card"></div>
+  <div class="foot2">
+    <div class="dots" id="in-dots"></div>
+    <button class="pill-btn" id="in-next">Next</button>
+  </div>
+</div>
+
+<div id="coach"><div id="spot"></div><div id="tip"></div></div>
+
+<div id="focus">
+  <div class="froots" id="f-roots"></div>
+  <div class="ftitle" id="f-title"></div>
+  <div class="dial"><svg viewBox="0 0 190 190">
+    <circle class="bg" cx="95" cy="95" r="88"/>
+    <circle class="fg" id="f-arc" cx="95" cy="95" r="88"/></svg><b id="f-clock">25:00</b></div>
+  <div class="frow">
+    <button class="fb done" id="f-fin">Finished it</button>
+    <button class="fb" id="f-pause">Pause</button>
+    <button class="fb" id="f-quit">Leave it</button>
+  </div>
+</div>
+
+<div id="undo"><span id="undo-t"></span><button id="undo-b">Undo</button></div>
+<div class="sheet" id="sheet"><div class="sin" id="sin"></div></div>
+
+<script>
+const TICK='<svg viewBox="0 0 14 14"><polyline points="2,7.4 5.4,10.6 12,3.6"/></svg>';
+/* the dot IS the bullet. these say: move this bullet. */
+const ICO={
+  in:  '<svg class="mv" viewBox="0 0 22 14"><circle cx="3.2" cy="7" r="2.6"/>'+
+       '<path d="M7.6 7h9M13.4 3.8L17 7l-3.6 3.2"/></svg>',
+  out: '<svg class="mv" viewBox="0 0 22 14"><circle cx="18.8" cy="7" r="2.6"/>'+
+       '<path d="M14.4 7h-9M8.6 3.8L5 7l3.6 3.2"/></svg>',
+  up:  '<svg class="mv" viewBox="0 0 14 22"><circle cx="7" cy="18.8" r="2.6"/>'+
+       '<path d="M7 14.4v-9M3.8 8.6L7 5l3.2 3.6"/></svg>',
+  down:'<svg class="mv" viewBox="0 0 14 22"><circle cx="7" cy="3.2" r="2.6"/>'+
+       '<path d="M7 7.6v9M3.8 13.4L7 17l3.2-3.6"/></svg>'
+};
+const DAY=864e5;
+let uid=0;const nid=()=>'n'+(++uid);
+const at=d=>{const x=new Date();x.setDate(x.getDate()+d);x.setHours(18,0,0,0);return x.getTime()};
+const nd=(t,kids,x)=>Object.assign({id:nid(),t,kids:kids||[],done:false,collapsed:true},x||{});
+
+const ROOT=nd('Everything',[]);
+
+/* ---------- it has to survive a reload ---------- */
+var askCue=false;
+const KEY='yodo.v1';
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(
+    {tree:ROOT,zoom,mode,uid,doLens,askCue,theme:document.body.dataset.theme,
+     fs:document.documentElement.style.getPropertyValue('--fs'),
+     ff:document.documentElement.style.getPropertyValue('--ff'),
+     flen:F_LEN}))}catch(e){}
+}
+let saveT;
+function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,250)}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY); if(!raw)return false;
+    const d=JSON.parse(raw); if(!d||!d.tree)return false;
+    Object.assign(ROOT,d.tree);
+    uid=d.uid||uid;
+    if(d.theme)document.body.dataset.theme=d.theme;
+    if(d.fs)document.documentElement.style.setProperty('--fs',d.fs);
+    if(d.ff)document.documentElement.style.setProperty('--ff',d.ff);
+    if(d.flen)F_LEN=d.flen;
+    if(d.doLens)doLens=d.doLens;
+    if(typeof d.askCue==='boolean')askCue=d.askCue;
+    return d;
+  }catch(e){return false}
+}
+
+let zoom=ROOT.id, openId=null, mode='map';
+
+function find(id,node,parent){node=node||ROOT;
+  if(node.id===id)return{node,parent:parent||null};
+  for(const k of node.kids){const r=find(id,k,node);if(r)return r}return null}
+function chain(id){const out=[];let c=find(id);
+  while(c){out.unshift(c.node);c=c.parent?find(c.parent.id):null}return out}
+const here=()=>find(zoom).node;
+function stats(x){let d=0,t=0;for(const k of x.kids){t++;const s=stats(k);
+  if(k.done||(k.kids.length&&s.total&&s.done===s.total))d++}return{done:d,total:t}}
+const isDone=x=>{const s=stats(x);return x.done||(x.kids.length&&s.total&&s.done===s.total)};
+
+function label(ms){
+  if(ms==null)return null;
+  const diff=ms-Date.now(),d=Math.floor(diff/DAY);
+  if(diff<0) return{txt:Math.ceil(-diff/DAY)+'d late',cls:'late'};
+  if(d===0)  return{txt:'today',cls:'today'};
+  if(d===1)  return{txt:'tomorrow',cls:''};
+  if(d<7)    return{txt:new Date(ms).toLocaleDateString(undefined,{weekday:'short'}),cls:''};
+  return{txt:new Date(ms).toLocaleDateString(undefined,{day:'numeric',month:'short'}),cls:''};
+}
+
+/* ---------- getting your list out of here ---------- */
+function dl(name,text,type){
+  const b=new Blob([text],{type:type||'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function asText(){
+  const out=[];
+  (function walk(x,d){
+    x.kids.forEach(k=>{
+      const bits=[];
+      if(k.when!=null){const l=label(k.when);if(l)bits.push(l.txt)}
+      if(k.repeat)bits.push('repeats '+k.repeat);
+      if(k.urgent)bits.push('urgent');
+      if(k.imp)bits.push('important');
+      out.push('  '.repeat(d)+(k.done?'[x] ':'[ ] ')+k.t+
+        (bits.length?'   ('+bits.join(', ')+')':''));
+      if(k.note)out.push('  '.repeat(d)+'    \u21B3 '+k.note);
+      walk(k,d+1);
+    });
+  })(ROOT,0);
+  return (ROOT.t||'Everything')+'\n\n'+out.join('\n')+'\n';
+}
+function toastLine(msg){offerUndo(msg,null)}
+
+/* ---------- undo: nothing destructive is one-way ---------- */
+let undoFn=null,undoT;
+function offerUndo(msg,fn){
+  undoFn=fn||null;
+  document.getElementById('undo-t').textContent=msg;
+  document.getElementById('undo-b').style.display=fn?'':'none';
+  const u=document.getElementById('undo');u.classList.add('on');
+  clearTimeout(undoT);undoT=setTimeout(()=>{u.classList.remove('on');undoFn=null},5000);
+}
+document.getElementById('undo-b').onclick=()=>{
+  if(undoFn)undoFn();undoFn=null;
+  document.getElementById('undo').classList.remove('on');render();
+};
+
+/* ---------- render ---------- */
+function render(){
+  document.getElementById('tree').style.display   = mode==='map'?'':'none';
+  document.getElementById('dolist').style.display = mode==='do' ?'':'none';
+  document.getElementById('fold').style.display   = mode==='map'?'':'none';
+  document.querySelectorAll('#modes button').forEach(b=>
+    b.classList.toggle('on',b.dataset.m===mode));
+  if(mode==='do')return renderDo();
+  const H=here();
+  const cr=document.getElementById('crumbs');cr.innerHTML='';
+  chain(zoom).slice(0,-1).forEach(node=>{
+    const b=document.createElement('button');b.textContent=node.t;
+    b.onclick=()=>{goTo(node.id)};
+    cr.append(b,Object.assign(document.createElement('span'),{className:'sep',textContent:'›'}));
+  });
+  const h=document.getElementById('title');
+  if(document.activeElement!==h)h.textContent=H.t;
+  h.oninput=()=>{H.t=h.textContent;saveSoon()};
+
+  document.getElementById('back').classList.toggle('off',chain(zoom).length<2);
+
+  const t=document.getElementById('tree');t.innerHTML='';
+  if(!H.kids.length&&H.id===ROOT.id){
+    const hint=document.createElement('div');
+    hint.className='opening';
+    hint.textContent='Anything at all. It does not have to be a task, or well formed, '+
+      'or in the right place \u2014 structure comes later, and mostly on its own.';
+    t.appendChild(hint);
+  }
+  t.appendChild(kidsEl(H,1));
+  ghost(t,H);
+  save();
+}
+
+function kidsEl(parent,depth){
+  const box=document.createElement('div');box.className='kids';
+  parent.kids.forEach(k=>box.appendChild(rowEl(k,parent,depth)));
+  return box;
+}
+
+function rowEl(node,parent,depth){
+  const wrap=document.createElement('div');
+  const s=stats(node),has=node.kids.length>0;
+  wrap.className='d'+Math.min(depth,4)+(has?' holds':'')+(isDone(node)?' done':'')+
+    ((node.note||openId===node.id)?' hasnote':'');
+
+  const lab=label(node.when);
+  const r=document.createElement('div');
+  r.className='row'+(lab?' '+lab.cls:'');
+
+  const car=document.createElement('button');
+  car.className='caret'+(has?'':' none')+(has&&!node.collapsed?' open':'');
+  car.innerHTML='&#9656;';car.tabIndex=-1;
+  car.onclick=e=>{e.stopPropagation();node.collapsed=!node.collapsed;render()};
+
+  const tick=document.createElement('button');
+  tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
+  tick.onclick=e=>{e.stopPropagation();
+    node.done=!node.done;
+    if(node.done&&openId===node.id)openId=null;   /* R39 */
+    render()};
+
+  const tx=document.createElement('div');
+  tx.className='t';tx.spellcheck=false;tx.textContent=node.t;
+  /* lateness is information; a chosen colour is not. information wins. */
+  if(node.hue&&!(lab&&lab.cls==='late'))tx.style.color=HUES[node.hue];
+  tx.dataset.id=node.id;
+  /* first tap opens the row. second tap edits it. the keyboard only
+     appears when you actually mean to type. */
+  tx.contentEditable = (openId===node.id)?'true':'false';
+  tx.onclick=e=>{
+    if(openId!==node.id){e.preventDefault();openId=node.id;render()}
+  };
+  tx.oninput=()=>{node.t=tx.textContent;saveSoon()};
+  tx.onkeydown=e=>key(e,node,parent);
+
+  const m=document.createElement('div');m.className='marks';
+  const marks=[];
+  /* both flags together count as ONE mark, so a date can never be pushed off */
+  if(node.urgent||node.imp){
+    marks.push('<span class="flags">'+
+      (node.urgent?'<span class="mk urg">\u23F1</span>':'')+
+      (node.imp?'<span class="mk imp">Imp</span>':'')+'</span>');
+  }
+  if(lab)marks.push(`<span class="mk ${lab.cls}">${lab.txt}</span>`);
+  else if(node.repeat)marks.push(`<span class="mk rep">${
+    node.repeat==='weekly'&&node.rDay!=null?WD[node.rDay]
+    :node.repeat==='monthly'&&node.rDate!=null?('the '+node.rDate)
+    :node.repeat}</span>`);
+  m.innerHTML=marks.slice(0,2).join('');
+  /* a flag you can see is a flag you can turn off — one tap, no menu */
+  m.querySelectorAll('.mk.urg').forEach(el=>{el.classList.add('tap');
+    el.onclick=e=>{e.stopPropagation();node.urgent=false;render()}});
+  m.querySelectorAll('.mk.imp').forEach(el=>{el.classList.add('tap');
+    el.onclick=e=>{e.stopPropagation();node.imp=false;render()}});
+
+  /* EVERY row gets a way in */
+  const into=document.createElement('button');
+  into.className='into';into.setAttribute('aria-label','step inside');
+  if(has){
+    const R=7,C=2*Math.PI*R,p=s.total?s.done/s.total:0;
+    into.innerHTML=`${node.collapsed?`<span class="n">${s.total-s.done}</span>`:''}
+      <svg class="prog" viewBox="0 0 18 18"><circle class="bg" cx="9" cy="9" r="${R}"/>
+      <circle class="fg" cx="9" cy="9" r="${R}" stroke-dasharray="${C}"
+        stroke-dashoffset="${C*(1-p)}"/></svg>`;
+  }else{
+    into.innerHTML='<svg viewBox="0 0 18 18"><circle class="dot" cx="9" cy="9" r="2.8"/></svg>';
+  }
+  into.onclick=e=>{e.stopPropagation();node.collapsed=false;goTo(node.id)};
+
+  const main=document.createElement('div');main.className='main';
+  main.append(tx,m);
+  r.append(car,tick,main,into);
+  wrap.appendChild(r);
+
+  if(node.note||openId===node.id){
+    const nt=document.createElement('div');
+    nt.className='note'+(openId===node.id?' edit':'');
+    nt.textContent=node.note||'';
+    if(openId===node.id){
+      nt.contentEditable='true';nt.spellcheck=false;
+      nt.dataset.note=node.id;
+      if(!node.note)nt.setAttribute('data-ph','1');
+      nt.oninput=()=>{node.note=nt.textContent;saveSoon()};
+      nt.onclick=e=>e.stopPropagation();
+    }
+    if(node.note||openId===node.id)wrap.appendChild(nt);
+  }
+
+  if(openId===node.id)wrap.appendChild(ctlEl(node,parent));
+  if(has&&!node.collapsed)wrap.appendChild(kidsEl(node,depth+1));
+  return wrap;
+}
+
+function ctlEl(node,parent){
+  const c=document.createElement('div');c.className='ctl';
+  const l1=document.createElement('div');l1.className='line';
+  const l2=document.createElement('div');l2.className='line';
+
+  c.append(l1,l2);
+  let host=l1;
+  const mk=(html,cls,fn,lbl)=>{const b=document.createElement('button');
+    b.className='cb '+(cls||'');b.innerHTML=html;
+    if(lbl){b.title=lbl;b.setAttribute('aria-label',lbl)}
+    b.onmousedown=e=>e.preventDefault();
+    b.onclick=e=>{e.stopPropagation();fn()};host.appendChild(b)};
+  const pad=document.createElement('div');pad.className='pad';
+  [[ICO.out,'Out',()=>run('Tab',true)],[ICO.in,'In',()=>run('Tab',false)],['sp'],
+   [ICO.up,'Up',()=>shift(node,parent,-1)],[ICO.down,'Down',()=>shift(node,parent,1)],['sp'],
+   ['&#128465;','Delete',()=>{
+      const i=parent.kids.indexOf(node),copy=node;
+      parent.kids.splice(i,1);openId=null;render();
+      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy)})},'bin']]
+   .forEach(([html,lbl,fn,cls])=>{
+     if(html==='sp'){pad.appendChild(Object.assign(document.createElement('div'),{className:'sp'}));return}
+     const b=document.createElement('button');b.innerHTML=html;b.title=lbl;
+     if(cls)b.className=cls;
+     b.setAttribute('aria-label',lbl);
+     b.onmousedown=e=>e.preventDefault();
+     b.onclick=e=>{e.stopPropagation();fn()};pad.appendChild(b)});
+  l1.appendChild(pad);
+  const x=document.createElement('button');
+  x.className='cb x';x.innerHTML='&#10005;';x.title='Close';x.setAttribute('aria-label','Close');
+  x.onmousedown=e=>e.preventDefault();
+  x.onclick=e=>{e.stopPropagation();openId=null;render()};
+  x.style.marginLeft='auto';
+  l1.appendChild(x);
+  host=l2;
+  const lab2=label(node.when);
+  mk('&#9200;', node.urgent?'set urg':'sym',
+     ()=>{node.urgent=!node.urgent;render();if(node.urgent)nudgeCue(node)}, 'Urgent');
+  mk('Imp',     node.imp?'set':'sym',
+     ()=>{node.imp=!node.imp;render();if(node.imp)nudgeCue(node)}, 'Important');
+  mk('&#128197;', node.when!=null?('set'+(lab2.cls==='late'?' late':'')):'sym',
+     ()=>datePick(node), 'When');
+  mk('&#8635;', node.repeat?'set':'sym', ()=>repeatPick(node), 'Repeats');
+  mk(swatch(node), node.hue?'set':'sym', ()=>huePick(node), 'Colour');
+  return c;
+}
+
+function shift(node,parent,d){
+  const i=parent.kids.indexOf(node),j=i+d;
+  if(j<0||j>=parent.kids.length)return;
+  parent.kids.splice(i,1);parent.kids.splice(j,0,node);
+  render();focus(node.id);
+}
+
+/* ---------- outliner keyboard ---------- */
+function key(e,node,parent){
+  const i=parent.kids.indexOf(node);
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const sel=getSelection(), atStart = sel && sel.anchorOffset===0 && node.t;
+    if(atStart){            /* open a line ABOVE; this one drops down with its parts */
+      parent.kids.splice(i,0,nd(''));
+      openId=node.id;render();focus(node.id);
+    }else{
+      const f=nd('');parent.kids.splice(i+1,0,f);openId=f.id;render();focus(f.id);
+    }
+  }
+  if((e.key==='ArrowUp'||e.key==='ArrowDown')&&e.shiftKey&&(e.altKey||e.metaKey)){
+    e.preventDefault();shift(node,parent,e.key==='ArrowUp'?-1:1);
+  }
+  if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();
+    if(i>0){const up=parent.kids[i-1];parent.kids.splice(i,1);
+      up.collapsed=false;up.kids.push(node);render();focus(node.id)}}
+  if(e.key==='Tab'&&e.shiftKey){e.preventDefault();
+    const gp=find(parent.id).parent;
+    if(gp&&parent.id!==here().id){parent.kids.splice(i,1);
+      gp.kids.splice(gp.kids.indexOf(parent)+1,0,node);render();focus(node.id)}}
+  if(e.key==='Backspace'&&!node.t&&!node.kids.length){e.preventDefault();
+    parent.kids.splice(i,1);openId=null;render();
+    if(parent.kids[i-1])focus(parent.kids[i-1].id)}
+}
+function run(k,shift){
+  const el=document.querySelector('.t:focus')||document.querySelector(`.t[data-id="${openId}"]`);
+  if(!el)return;const{node,parent}=find(el.dataset.id);
+  key({key:k,shiftKey:shift,preventDefault(){}},node,parent);
+}
+function focus(id){
+  const el=document.querySelector(`.t[data-id="${id}"]`);if(!el)return;
+  el.contentEditable='true';el.focus();
+  const r=document.createRange(),s=getSelection();
+  r.selectNodeContents(el);r.collapse(false);s.removeAllRanges();s.addRange(r);
+}
+
+function ghost(host,parent){
+  const g=document.createElement('div');g.className='ghost';
+  g.innerHTML='<span class="g"><i></i></span><span>'+
+    (parent.kids.length ? 'write the next one'
+      : (parent.id===ROOT.id ? 'put the first thing down'
+         : 'nothing inside yet \u2014 what is the first part?'))+'</span>';
+  g.onclick=e=>{e.stopPropagation();
+    const f=nd('');parent.kids.push(f);openId=f.id;render();focus(f.id)};
+  host.appendChild(g);
+}
+
+/* ============================================================
+   DO — everything with a date, in time order.
+   You cannot restructure here. You can only finish things.
+   The roots are shown small and quiet, purely so you know
+   where a thing came from.
+   ============================================================ */
+function ancestry(id){
+  return chain(id).slice(1,-1);      /* drop ROOT and the item itself */
+}
+/* anything you have marked in any way is fair game for Do.
+   most things never get a date; that must not exclude them. */
+function pickedUp(){
+  const out=[];
+  (function walk(x){
+    x.kids.forEach(k=>{
+      if(!isDone(k)&&!k.kids.length&&(k.when!=null||k.urgent||k.imp||k.star))out.push(k);
+      if(!isDone(k))walk(k);
+    });
+  })(ROOT);
+  return out;
+}
+const BY_TIME=[
+  ['late', 'overdue',   n=>n.when!=null&&n.when-Date.now()<0],
+  ['now',  'today',     n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=0&&d<1}],
+  ['tom',  'tomorrow',  n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=1&&d<2}],
+  ['week', 'this week', n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=2&&d<7}],
+  ['later','later',     n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=7}],
+  ['none', 'no day yet, but marked', n=>n.when==null]
+];
+/* two flags, four boxes. no scoring, no matrix diagram. */
+const BY_WEIGHT=[
+  ['late','urgent and important', n=>n.urgent&&n.imp],
+  ['now', 'urgent',               n=>n.urgent&&!n.imp],
+  ['week','important',            n=>!n.urgent&&n.imp],
+  ['later','just dated',          n=>!n.urgent&&!n.imp]
+];
+let doLens='time';   /* first run only; after that it remembers */
+
+/* if you only do one thing. the rule is fixed and it says what it is. */
+function theOne(pool){
+  const late=n=>n.when!=null&&n.when-Date.now()<0;
+  const today=n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=0&&d<1};
+  const chosen=pool.find(n=>n.pinned);
+  if(chosen)return {node:chosen,why:'you chose it'};
+  const rules=[
+    [n=>late(n)&&n.urgent&&n.imp, 'it is overdue, urgent and important'],
+    [n=>late(n)&&n.imp,           'it is overdue, and it matters'],
+    [n=>late(n),                  'it is already late'],
+    [n=>n.urgent&&n.imp,          'it is both urgent and important'],
+    [n=>today(n)&&n.imp,          'it is due today, and it matters'],
+    [n=>today(n),                 'it is due today'],
+    [n=>n.urgent,                 'you marked it urgent'],
+    [n=>n.imp,                    'you marked it important'],
+    [n=>n.when!=null,             'it has the nearest day on it']
+  ];
+  for(const [test,why] of rules){
+    const hit=pool.find(test);
+    if(hit)return {node:hit,why};
+  }
+  return pool.length?{node:pool[0],
+    why:pool.length===1?'it is the only thing waiting':'nothing else is asking louder'}:null;
+}
+
+function renderDo(){
+  save();
+  document.getElementById('back').classList.add('off');
+  document.getElementById('crumbs').innerHTML='';
+  document.getElementById('title').textContent='Do';
+
+  const L=document.getElementById('dolist');L.innerHTML='';
+
+  const lens=document.createElement('div');lens.className='lens';
+  [['time','by day'],['weight','by weight']].forEach(([k,name])=>{
+    const b=document.createElement('button');b.textContent=name;
+    b.className=doLens===k?'on':'';
+    b.onclick=()=>{doLens=k;save();render()};lens.appendChild(b);
+  });
+  L.appendChild(lens);
+
+  const pool=pickedUp().sort((a,b)=>(a.when||Infinity)-(b.when||Infinity));
+
+  const one=theOne(pool);
+  if(one){
+    const h=document.createElement('div');h.className='theone';
+    const anc=ancestry(one.node.id).map(a=>a.t).join('  \u203A  ');
+    h.innerHTML='<div class="lead">If you do one thing</div>'+
+      (anc?'<div class="oanc">'+anc+'</div>':'')+
+      '<div class="otitle">'+one.node.t+'</div>'+
+      (one.node.note?'<div class="ocue">\u21B3\u00a0\u00a0'+one.node.note+'</div>':'')+
+      '<div class="owhy">because '+one.why+'</div>';
+    const act=document.createElement('div');act.className='oact';
+    const g=document.createElement('button');g.className='go big';g.textContent='Start it';
+    g.onclick=()=>startFocus(one.node);
+    const d=document.createElement('button');d.className='cb';d.textContent='Finished it';
+    d.onclick=()=>{one.node.done=true;one.node.pinned=false;render()};
+    act.append(g,d);
+    if(one.node.pinned){
+      const un=document.createElement('button');un.className='cb pin on';
+      un.textContent='let it choose again';
+      un.onclick=()=>{one.node.pinned=false;save();render()};
+      act.appendChild(un);
+    }
+    h.appendChild(act);
+    L.appendChild(h);
+  }
+
+  if(!pool.length){
+    L.insertAdjacentHTML('beforeend','<div class="ghost" style="opacity:.6;cursor:default">'+
+      '<span class="g"><i></i></span><span>Nothing picked up yet. In Map, give something '+
+      'a day, or mark it urgent or important.</span></div>');
+    return;
+  }
+
+  let shown=0;
+  (doLens==='time'?BY_TIME:BY_WEIGHT).forEach(([cls,name,test])=>{
+    const rows=pool.filter(test);
+    if(!rows.length)return;
+    shown+=rows.length;
+    const b=document.createElement('div');
+    b.className='band'+(cls==='now'?' now':cls==='late'?' late':'');
+    b.innerHTML='<h2>'+name+'</h2>';
+    L.appendChild(b);
+    rows.forEach(n=>L.appendChild(doItem(n)));
+  });
+
+  const foot=document.createElement('div');foot.className='foot';
+  foot.textContent=shown+' picked up. Mark something urgent, important or dated in Map '+
+    'and it appears here.';
+  L.appendChild(foot);
+}
+
+function doItem(node){
+  const w=document.createElement('div');
+  w.className='doit'+(isDone(node)?' done':'');
+
+  const anc=ancestry(node.id);
+  if(anc.length){
+    const r=document.createElement('div');r.className='roots';
+    anc.forEach((a,i)=>{
+      const sp=document.createElement('span');sp.className='r';sp.textContent=a.t;
+      r.appendChild(sp);
+      if(i<anc.length-1){const s2=document.createElement('span');s2.className='s';
+        s2.textContent='\u203A';r.appendChild(s2)}
+    });
+    w.appendChild(r);
+  }
+
+  const line=document.createElement('div');line.className='doline';
+  const tick=document.createElement('button');
+  tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
+  if(isDone(node)){tick.style.background='var(--acc)';tick.style.borderColor='var(--acc)';
+    tick.querySelector('svg').style.strokeDashoffset='0'}
+  tick.onclick=()=>{node.done=!node.done;render()};
+  const tx=document.createElement('div');tx.className='dotext';tx.textContent=node.t;
+  line.append(tick,tx);
+  const fl=[];
+  if(node.urgent)fl.push('<span class="mk urg">\u23F1</span>');
+  if(node.imp)fl.push('<span class="mk imp">Imp</span>');
+  if(node.star)fl.push('<span class="dostar">\u2605</span>');
+  if(fl.length){const f=document.createElement('div');f.style.cssText='display:flex;gap:8px;align-items:center';
+    f.innerHTML=fl.join('');line.appendChild(f)}
+  w.appendChild(line);
+
+  if(node.note){const nn=document.createElement('div');nn.className='donote';
+    nn.textContent='\u21B3\u00a0\u00a0'+node.note;w.appendChild(nn)}
+
+  const meta=document.createElement('div');meta.className='dometa';
+  const lab=label(node.when);
+  if(lab){const d=document.createElement('span');d.className='dodate '+lab.cls;
+    d.textContent=lab.txt;meta.appendChild(d)}
+  if(!isDone(node)){
+    const go=document.createElement('button');go.className='go';go.textContent='Start';
+    go.onclick=()=>startFocus(node);meta.appendChild(go);
+    const pin=document.createElement('button');pin.className='cb pin'+(node.pinned?' on':'');
+    pin.textContent=node.pinned?'my one thing':'make this my one thing';
+    pin.onclick=()=>{const was=node.pinned;
+      pickedUp().forEach(n=>n.pinned=false);
+      node.pinned=!was;save();render()};
+    meta.appendChild(pin);
+  }
+  w.appendChild(meta);
+  return w;
+}
+
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;openId=null;render()});
+
+/* ---------- focus: 25 minutes, no score kept ---------- */
+let fNode=null,fLeft=0,fTimer=null,fRun=false;
+let F_LEN=25*60;
+function startFocus(node){
+  fNode=node;fLeft=F_LEN;fRun=true;
+  document.getElementById('f-roots').textContent=
+    ancestry(node.id).map(a=>a.t).join('  \u203A  ');
+  document.getElementById('f-title').textContent=node.t;
+  document.getElementById('focus').classList.add('on');
+  paintFocus();
+  clearInterval(fTimer);
+  fTimer=setInterval(()=>{if(!fRun)return;fLeft--;if(fLeft<=0){fLeft=0;fRun=false}paintFocus()},1000);
+}
+function paintFocus(){
+  const m=String(Math.floor(fLeft/60)).padStart(2,'0'),
+        sec=String(fLeft%60).padStart(2,'0');
+  document.getElementById('f-clock').textContent=m+':'+sec;
+  const C=2*Math.PI*88;
+  const arc=document.getElementById('f-arc');
+  arc.setAttribute('stroke-dasharray',C);
+  arc.setAttribute('stroke-dashoffset',C*(1-fLeft/F_LEN));
+  document.getElementById('f-pause').textContent=fRun?'Pause':'Carry on';
+}
+function endFocus(){clearInterval(fTimer);fRun=false;fNode=null;
+  document.getElementById('focus').classList.remove('on');render()}
+document.getElementById('f-pause').onclick=()=>{fRun=!fRun;paintFocus()};
+document.getElementById('f-quit').onclick=endFocus;
+document.getElementById('f-fin').onclick=()=>{if(fNode)fNode.done=true;endFocus()};
+
+/* ---------- expand / collapse everything ---------- */
+let allOpen=false;
+document.getElementById('back').onclick=()=>{history.back()};
+document.getElementById('fold').onclick=()=>{
+  allOpen=!allOpen;
+  (function walk(x){x.kids.forEach(k=>{k.collapsed=!allOpen;walk(k)})})(here());
+  render();
+};
+
+/* ---------- date ---------- */
+const sheet=document.getElementById('sheet'),sin=document.getElementById('sin');
+function datePick(node){
+  sin.innerHTML='<div class="grip"></div><h3>When will you do it?</h3>';
+  const o=document.createElement('div');o.className='opts';
+  [['Today',0],['Tomorrow',1],['This weekend',(6-new Date().getDay()+7)%7||6],
+   ['Next week',7],['In a month',30]].forEach(([l,d])=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=l;
+    b.onclick=()=>{node.when=at(d);sheet.classList.remove('on');render();nudgeCue(node)};
+      o.appendChild(b)});
+  if(node.when!=null){const c=document.createElement('button');c.className='opt clear';
+    c.textContent='No date';c.onclick=()=>{node.when=null;sheet.classList.remove('on');render()};
+    o.appendChild(c)}
+  sin.appendChild(o);
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">or pick one</div>');
+  const inp=document.createElement('input');inp.type='date';
+  if(node.when)inp.value=new Date(node.when).toISOString().slice(0,10);
+  inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;
+    sheet.classList.remove('on');render()};
+  sin.appendChild(inp);sheet.classList.add('on');
+}
+/* a cue names the moment you will be standing in. a reminder that names only
+   the task is the weak kind — it needs the moment too. The question is the
+   whole intervention; answering it for them would undo it. */
+const HUES={terracotta:'#C2611F',ink:'#2F5D8C',moss:'#3F6B44',
+            plum:'#7A3F6B',rose:'#A83A54',ochre:'#9A7B1F'};
+function swatch(node){
+  return node.hue
+    ? '<span class="sw" style="background:'+HUES[node.hue]+'"></span>'
+    : '<span class="sw none"></span>';
+}
+function huePick(node){
+  sin.innerHTML='<div class="grip"></div><h3>Give it a colour</h3>'+
+    '<p style="font-size:13px;color:var(--dim);margin-bottom:14px">'+
+    'Useful on the lines that hold everything else together.</p>';
+  const o=document.createElement('div');o.className='opts';
+  const none=document.createElement('button');none.className='opt';none.textContent='Plain';
+  none.setAttribute('aria-pressed',!node.hue);
+  none.onclick=ev=>{ev.stopPropagation();node.hue=null;sheet.classList.remove('on');render()};
+  o.appendChild(none);
+  Object.keys(HUES).forEach(k=>{
+    const b=document.createElement('button');b.className='opt hue';
+    b.innerHTML='<span class="sw" style="background:'+HUES[k]+'"></span>'+k;
+    b.setAttribute('aria-pressed',node.hue===k);
+    b.onclick=ev=>{ev.stopPropagation();node.hue=k;sheet.classList.remove('on');render()};
+    o.appendChild(b)});
+  sin.appendChild(o);sheet.classList.add('on');
+}
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function repeatPick(node){
+  sin.innerHTML='<div class="grip"></div><h3>Does it come back?</h3>';
+  const o=document.createElement('div');o.className='opts';
+  ['daily','weekly','monthly'].forEach(r=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=r;
+    b.setAttribute('aria-pressed',node.repeat===r);
+    b.onclick=ev=>{ev.stopPropagation();
+      if(node.repeat===r&&r==='daily'){sheet.classList.remove('on');render();return}
+      node.repeat=r;
+      if(r==='weekly'&&node.rDay==null)node.rDay=new Date().getDay();
+      if(r==='monthly'&&node.rDate==null)node.rDate=new Date().getDate();
+      if(r==='daily'){sheet.classList.remove('on');render();return}
+      repeatPick(node)};
+    o.appendChild(b)});
+  if(node.repeat){const c=document.createElement('button');c.className='opt clear';c.textContent='Never';
+    c.onclick=()=>{node.repeat=null;node.rDay=node.rDate=null;sheet.classList.remove('on');render()};
+    o.appendChild(c)}
+  sin.appendChild(o);
+
+  if(node.repeat==='weekly'){
+    sin.insertAdjacentHTML('beforeend','<div class="lbl">on which day</div>');
+    const w=document.createElement('div');w.className='opts';
+    WD.forEach((d,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=d;
+      b.setAttribute('aria-pressed',node.rDay===i);
+      b.onclick=ev=>{ev.stopPropagation();node.rDay=i;
+        sheet.classList.remove('on');render()};w.appendChild(b)});
+    sin.appendChild(w);
+  }
+  if(node.repeat==='monthly'){
+    sin.insertAdjacentHTML('beforeend','<div class="lbl">on which date</div>');
+    const w=document.createElement('div');w.className='opts';w.style.maxHeight='168px';
+    w.style.overflowY='auto';
+    for(let i=1;i<=31;i++){const b=document.createElement('button');b.className='opt';
+      b.style.padding='9px 0';b.style.minWidth='42px';b.textContent=i;
+      b.setAttribute('aria-pressed',node.rDate===i);
+      b.onclick=ev=>{ev.stopPropagation();node.rDate=i;
+        sheet.classList.remove('on');render()};w.appendChild(b)}
+    sin.appendChild(w);
+  }
+  sheet.classList.add('on');
+}
+sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('on')};
+
+/* ---------- look ---------- */
+document.getElementById('gear').onclick=()=>{
+  sin.innerHTML='<div class="grip"></div><h3>Look</h3>';
+  const row=(title,items,cur,fn)=>{
+    sin.insertAdjacentHTML('beforeend','<div class="lbl">'+title+'</div>');
+    const o=document.createElement('div');o.className='opts';
+    items.forEach(([l,v])=>{const b=document.createElement('button');b.className='opt';b.textContent=l;
+      b.setAttribute('aria-pressed',String(cur())===String(v));
+      b.onclick=()=>{fn(v);document.getElementById('gear').click()};o.appendChild(b)});
+    sin.appendChild(o)};
+  row('Paper',[['Warm','paper'],['Cool','light'],['Dark','dark']],
+    ()=>document.body.dataset.theme,v=>document.body.dataset.theme=v);
+  row('Text size',[['Small',.92],['Normal',1],['Large',1.12]],
+    ()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs')||1),
+    v=>document.documentElement.style.setProperty('--fs',v));
+  row('Focus length',[['15 min',900],['25 min',1500],['45 min',2700],['60 min',3600]],
+    ()=>F_LEN, v=>{F_LEN=+v});
+  row('Typeface',[['Sans',"'Instrument Sans'"],['Serif',"'Newsreader'"]],
+    ()=>getComputedStyle(document.documentElement).getPropertyValue('--ff').trim(),
+    v=>{document.documentElement.style.setProperty('--ff',v);save()});
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">Cues</div>');
+  const cq=document.createElement('div');cq.className='opts';
+  [['Ask me every time',true],['Only when I want to',false]].forEach(([l,v])=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=l;
+    b.setAttribute('aria-pressed',askCue===v);
+    b.onclick=ev=>{ev.stopPropagation();askCue=v;save();document.getElementById('gear').click()};
+    cq.appendChild(b)});
+  sin.appendChild(cq);
+  sin.insertAdjacentHTML('beforeend',
+    '<div style="font-size:12.5px;color:var(--faint);margin-top:8px;line-height:1.55">'+
+    'When a line gets a day or a mark, the cue field takes the cursor. '+
+    'It never stops you saving \u2014 a task you cannot write down is worse than one with no cue.</div>');
+
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">Your list</div>');
+  const io=document.createElement('div');io.className='opts';
+  const mkio=(label,fn)=>{const b=document.createElement('button');b.className='opt';
+    b.textContent=label;b.onclick=ev=>{ev.stopPropagation();fn()};io.appendChild(b)};
+  mkio('Back up (.json)',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.json',
+    JSON.stringify({tree:ROOT,uid,saved:new Date().toISOString()},null,2),'application/json'));
+  mkio('As plain text',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.txt',
+    asText(),'text/plain'));
+  mkio('Copy outline',()=>{navigator.clipboard&&navigator.clipboard.writeText(asText())
+    .then(()=>toastLine('Copied.'),()=>toastLine('Could not copy.'))});
+  mkio('Print / save as PDF',()=>{sheet.classList.remove('on');setTimeout(()=>window.print(),250)});
+  mkio('Restore a backup',()=>{
+    const f=document.createElement('input');f.type='file';f.accept='.json,application/json';
+    f.onchange=()=>{const r=new FileReader();
+      r.onload=()=>{try{
+        const d=JSON.parse(r.result);const t=d.tree||d;
+        if(!t||!t.kids)throw 0;
+        for(const k in ROOT)delete ROOT[k];
+        Object.assign(ROOT,t);uid=d.uid||uid;
+        zoom=ROOT.id;openId=null;save();sheet.classList.remove('on');render();
+        toastLine('Restored.');
+      }catch(e){toastLine('That file did not read.')}};
+      r.readAsText(f.files[0])};
+    f.click()});
+  sin.appendChild(io);
+
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">First time</div>');
+  const again=document.createElement('div');again.className='opts';
+  const a1=document.createElement('button');a1.className='opt';a1.textContent='Show the introduction again';
+  a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
+  again.appendChild(a1);sin.appendChild(again);
+  sin.insertAdjacentHTML('beforeend',
+    '<div style="margin-top:26px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 6</div>');
+  sheet.classList.add('on');
+};
+
+document.addEventListener('click',e=>{
+  if(!openId)return;
+  /* a node removed by its own handler can no longer be asked where it lives,
+     so anything already detached is treated as "inside". */
+  if(!e.target.isConnected)return;
+  if(sheet.classList.contains('on'))return;
+  if(e.target.closest('.ctl')||e.target.closest('.t')||e.target.closest('.ghost')
+     ||e.target.closest('.note')||e.target.closest('.sheet')||e.target.closest('.row'))return;
+  openId=null;render();
+});
+
+/* ============================================================
+   FIRST RUN
+   Five cards, then three pointers at the real buttons.
+   Skippable at any point, and repeatable from Look.
+   ============================================================ */
+const SLIDES=[
+  {m:'\u25CB', h:'Yodo',
+   p:'One list, and everything lives in it \u2014 jobs, ideas, projects, the lot. '+
+     'You never file anything. Structure turns up on its own.'},
+  {m:'\u270E', h:'Write a line. Then another.',
+   p:'That is the whole of it to begin with.',
+   d:'<b>buy stamps</b><br><span class="k">Enter</span> starts the next line'},
+  {m:'\u21B3', h:'Tuck one line under another',
+   p:'And the line above quietly becomes a project. Nobody has to say so.',
+   d:'<b>Move flat</b><br><span class="ind"><b>book the van</b> &nbsp;<span class="k">Tab</span></span>'},
+  {m:'\u25CF', h:'Step inside anything',
+   p:'Tap the dot on the right of a line and it becomes the whole screen. '+
+     'The trail at the top brings you back.'},
+  {m:'\u21B3', h:'Say where you will be',
+   p:'A line that knows <b>when and where</b> gets done far more often than one that '+
+     'only knows what. Drop a cue: <i>at my desk</i>, <i>in the kitchen</i>, '+
+     '<i>on the way home</i>.'},
+  {m:'\u23F1', h:'Then just do things',
+   p:'Mark a line <b>\u23F1 urgent</b> or <b>Imp</b>ortant, or give it a day, and it turns up '+
+     'in <b>Do</b> \u2014 with one thing at the top, and why it was chosen.'}
+];
+let slide=0;
+function paintIntro(){
+  const S=SLIDES[slide];
+  document.getElementById('in-card').innerHTML=
+    '<div class="mark">'+S.m+'</div><h2>'+S.h+'</h2><p>'+S.p+'</p>'+
+    (S.d?'<div class="demo">'+S.d+'</div>':'');
+  document.getElementById('in-dots').innerHTML=
+    SLIDES.map((_,i)=>'<i class="'+(i===slide?'on':'')+'"></i>').join('');
+  document.getElementById('in-next').textContent=
+    slide===SLIDES.length-1?'Start':'Next';
+}
+function startIntro(){slide=0;paintIntro();document.getElementById('intro').classList.add('on')}
+function endIntro(goCoach){
+  document.getElementById('intro').classList.remove('on');
+  try{localStorage.setItem('yodo.seen','1')}catch(e){}
+  if(goCoach)setTimeout(()=>startCoach(),350);
+}
+document.getElementById('in-next').onclick=()=>{
+  if(slide<SLIDES.length-1){slide++;paintIntro()}else endIntro(true)};
+document.getElementById('in-skip').onclick=()=>endIntro(false);
+
+/* ---------- pointers at the real thing ---------- */
+const COACH=[
+  {sel:'.ghost', h:'Start here',
+   p:'This faint bullet is always at the end of a list. Tap it and write.'},
+  {sel:'#modes', h:'Two ways to look',
+   p:'<b>Map</b> is for thinking \u2014 nesting, moving, breaking things down. '+
+     '<b>Do</b> is for finishing, and nothing else.'},
+  {sel:'#gear', h:'Paper, size, typeface',
+   p:'And the length of a focus session. This introduction lives here too, '+
+     'if you want it again.'}
+];
+let coachAt=0;
+function startCoach(){coachAt=0;document.getElementById('coach').classList.add('on');paintCoach()}
+function endCoach(){document.getElementById('coach').classList.remove('on')}
+function paintCoach(){
+  const C=COACH[coachAt];
+  const el=document.querySelector(C.sel);
+  if(!el){coachAt++;return coachAt<COACH.length?paintCoach():endCoach()}
+  const r=el.getBoundingClientRect(),pad=8;
+  const spot=document.getElementById('spot');
+  spot.style.left=(r.left-pad)+'px';spot.style.top=(r.top-pad)+'px';
+  spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
+
+  const tip=document.getElementById('tip');
+  tip.innerHTML='<h4>'+C.h+'</h4><p>'+C.p+'</p><div class="row2">'+
+    '<span class="n">'+(coachAt+1)+' of '+COACH.length+'</span>'+
+    '<button class="later" id="c-skip">Not now</button>'+
+    '<button id="c-next">'+(coachAt===COACH.length-1?'Done':'Next')+'</button></div>';
+  const below=r.bottom+16, above=r.top-16;
+  const useBelow = below+150 < window.innerHeight;
+  tip.style.top = useBelow ? below+'px' : 'auto';
+  tip.style.bottom = useBelow ? 'auto' : (window.innerHeight-above)+'px';
+  const w=Math.min(270,window.innerWidth-32);
+  tip.style.left=Math.max(16,Math.min(window.innerWidth-w-16,r.left+r.width/2-w/2))+'px';
+  tip.style.width=w+'px';
+  document.getElementById('c-next').onclick=()=>{
+    coachAt++; coachAt<COACH.length?paintCoach():endCoach()};
+  document.getElementById('c-skip').onclick=endCoach;
+}
+window.addEventListener('resize',()=>{
+  if(document.getElementById('coach').classList.contains('on'))paintCoach()});
+
+/* ---------- back button: on Android and in the browser ---------- */
+function goTo(id,push){
+  zoom=id;openId=null;
+  if(push!==false)history.pushState({zoom:id,mode},'');
+  render();
+}
+window.addEventListener('popstate',e=>{
+  if(document.getElementById('focus').classList.contains('on')){endFocus();return}
+  if(sheet.classList.contains('on')){sheet.classList.remove('on');return}
+  const st=e.state;
+  if(st&&st.zoom&&find(st.zoom)){mode=st.mode||'map';zoom=st.zoom;openId=null;render();return}
+  const c=chain(zoom);
+  if(c.length>1){zoom=c[c.length-2].id;openId=null;render()}
+});
+/* every way of going deeper now records a step */
+document.addEventListener('DOMContentLoaded',()=>{});
+const _oldRender=render;
+history.replaceState({zoom,mode},'');
+
+const saved=load();
+if(saved&&saved.zoom&&find(saved.zoom)){zoom=saved.zoom;mode=saved.mode||'map'}
+render();
+
+/* long-press the home-screen icon: jump straight in */
+const q=new URLSearchParams(location.search).get('go');
+if(q==='do'){mode='do';render()}
+if(q==='new'){setTimeout(()=>{const g=document.querySelector('.ghost');if(g)g.click()},300)}
+
+let seen=false;
+try{seen=localStorage.getItem('yodo.seen')==='1'}catch(e){}
+if(!seen&&!ROOT.kids.length)setTimeout(startIntro,250);
+
+/* offline */
+if('serviceWorker' in navigator)
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
