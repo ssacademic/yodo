@@ -498,6 +498,7 @@ input[type=date]{width:100%;margin-top:var(--s3);background:var(--hair);border:n
   border-radius:var(--r2);padding:12px 14px;font:inherit;color:var(--ink);outline:none}
 .lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
   margin:var(--s4) 0 var(--s2)}
+.hint{font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.6;margin-top:var(--s2)}
 .foot{margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--hair);
   font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.75}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--hair);
@@ -597,9 +598,11 @@ const ICO={
 const DAY=864e5;
 /* one short pulse when a thing is finished. silent if the device cannot. */
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms||12)}catch(e){}}
-let uid=0;const nid=()=>'n'+(++uid);
+let uid=0;const SALT=Math.random().toString(36).slice(2,6)+Date.now().toString(36).slice(-3);
+const nid=()=>'n'+(++uid)+'.'+SALT;
 const at=d=>{const x=new Date();x.setDate(x.getDate()+d);x.setHours(18,0,0,0);return x.getTime()};
-const nd=(t,kids,x)=>Object.assign({id:nid(),t,kids:kids||[],done:false,collapsed:true},x||{});
+const nd=(t,kids,x)=>Object.assign({id:nid(),t,kids:kids||[],done:false,collapsed:true,touched:Date.now()},x||{});
+const touch=n=>{n.touched=Date.now()};
 
 const ROOT=nd('Everything',[]);
 
@@ -613,6 +616,7 @@ function save(){
      fs:document.documentElement.style.getPropertyValue('--fs'),
      ff:document.documentElement.style.getPropertyValue('--ff'),
      flen:F_LEN}))}catch(e){}
+  if(typeof syncSoon==='function')syncSoon();
 }
 let saveT;
 function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,250)}
@@ -761,6 +765,72 @@ function mergeTrees(mine,theirs){
   return {tree:rebuild(rows,rootId,(mine.tree||mine).t),gone:gone,stat:stat};
 }
 
+
+/* ============================================================
+   SYNC — moves the already-mergeable JSON between devices.
+   No accounts. A long random code is the whole identity: anyone
+   with the code has the list, losing it loses the remote copy.
+   The server never learns who you are. Fill SYNC_URL / SYNC_KEY
+   after creating the Supabase project (see dist/README).
+   ============================================================ */
+var SYNC_URL='https://sejdmdsljwlfbshxnbcx.supabase.co';
+var SYNC_KEY='sb_publishable_X7DIz7IDSYWIomK73OwW4A_ylutjO53';
+var SY=(function(){try{return JSON.parse(localStorage.getItem('yodo.sync')||'{}')}catch(e){return{}}})();
+function sySave(){try{localStorage.setItem('yodo.sync',JSON.stringify(SY))}catch(e){}}
+var syBusy=false, syT=null, syFetch=(u,o)=>fetch(u,o); /* syFetch is swappable so tests need no network */
+const syncOn=()=>!!(SYNC_URL&&SYNC_KEY&&SY.code);
+function syCodeNew(){
+  const a='abcdefghjkmnpqrstuvwxyz23456789';let c='';
+  const r=new Uint32Array(20);(crypto.getRandomValues?crypto.getRandomValues(r):r.map(()=>Math.random()*1e9));
+  for(let i=0;i<20;i++){c+=a[r[i]%a.length];if(i%5===4&&i<19)c+='-'}
+  return c;
+}
+function syPayload(){return {tree:ROOT,uid,gone:GONE,device:DEVICE,
+  saved:new Date().toISOString(),v:2}}
+function rpc(name,body){
+  const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const kill=ctl&&setTimeout(()=>ctl.abort(),10000);
+  return syFetch(SYNC_URL+'/rest/v1/rpc/'+name,{method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SYNC_KEY,
+             'Authorization':'Bearer '+SYNC_KEY},
+    body:JSON.stringify(body),signal:ctl?ctl.signal:undefined})
+    .then(r=>{if(kill)clearTimeout(kill);
+      if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .catch(e=>{if(kill)clearTimeout(kill);throw e});
+}
+/* pull → merge → apply if anything changed → push the merged whole */
+function syncNow(){
+  if(!syncOn()||syBusy)return Promise.resolve('skip');
+  syBusy=true;SY.err=null;
+  return rpc('yodo_get',{p_code:SY.code}).then(remote=>{
+    let changed=false;
+    if(remote&&remote.tree&&remote.tree.kids){
+      const out=mergeTrees({tree:ROOT,gone:GONE},{tree:remote.tree,gone:remote.gone||{}});
+      if(out.stat.fromTheirs||out.stat.deleted||out.stat.reattached){
+        for(const k in ROOT)delete ROOT[k]; Object.assign(ROOT,out.tree);
+        for(const k in GONE)delete GONE[k]; Object.assign(GONE,out.gone);
+        try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
+        if(remote.uid&&remote.uid>uid)uid=remote.uid;
+        if(!find(zoom)){zoom=ROOT.id;openId=null}
+        changed=true;
+      }
+    }
+    return rpc('yodo_put',{p_code:SY.code,p_data:syPayload()}).then(()=>{
+      SY.last=Date.now();sySave();syBusy=false;
+      if(changed){save();
+        /* never yank the caret out from under someone mid-word */
+        if(!(document.activeElement&&document.activeElement.isContentEditable))render();
+      }
+      return changed?'merged':'pushed';
+    });
+  }).catch(e=>{syBusy=false;SY.err=String(e&&e.message||e);sySave();return 'error'});
+}
+function syncSoon(){if(!syncOn())return;clearTimeout(syT);syT=setTimeout(syncNow,4000)}
+window.__sync={syncNow:syncNow,soon:syncSoon,state:()=>SY,
+  setCode:c=>{SY.code=c;sySave()},clearCode:()=>{delete SY.code;delete SY.last;delete SY.err;sySave()},
+  setFetch:f=>{syFetch=f},configure:(u,k)=>{SYNC_URL=u;SYNC_KEY=k},on:syncOn,newCode:syCodeNew};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&syncOn())syncNow()});
+
 /* ---------- getting your list out of here ---------- */
 function dl(name,text,type){
   const b=new Blob([text],{type:type||'text/plain'});
@@ -824,7 +894,7 @@ function render(){
   });
   const h=document.getElementById('title');
   if(document.activeElement!==h)h.textContent=H.t;
-  h.oninput=()=>{H.t=h.textContent;saveSoon()};
+  h.oninput=()=>{H.t=h.textContent;touch(H);saveSoon()};
 
   const t=document.getElementById('tree');t.innerHTML='';
   if(!H.kids.length&&H.id===ROOT.id){
@@ -885,7 +955,7 @@ function rowEl(node,parent,depth){
       if(!node.t)focus(node.id);
     }
   };
-  tx.oninput=()=>{node.t=tx.textContent;saveSoon()};
+  tx.oninput=()=>{node.t=tx.textContent;touch(node);saveSoon()};
   tx.onkeydown=e=>key(e,node,parent);
 
   const m=document.createElement('div');m.className='marks';
@@ -930,7 +1000,7 @@ function rowEl(node,parent,depth){
       nt.contentEditable='true';nt.spellcheck=false;
       nt.dataset.note=node.id;
       if(!node.note)nt.setAttribute('data-ph','1');
-      nt.oninput=()=>{node.note=nt.textContent;saveSoon()};
+      nt.oninput=()=>{node.note=nt.textContent;touch(node);saveSoon()};
       nt.onclick=e=>e.stopPropagation();
     }
     if(node.note||openId===node.id)wrap.appendChild(nt);
@@ -992,9 +1062,9 @@ function ctlEl(node,parent,depth){
   host=l2;
   const lab2=label(node.when);
   mk('&#9200;', node.urgent?'set urg':'sym',
-     ()=>{node.urgent=!node.urgent;render();if(node.urgent)nudgeCue(node)}, 'Urgent');
+     ()=>{node.urgent=!node.urgent;touch(node);render();if(node.urgent)nudgeCue(node)}, 'Urgent');
   mk('Imp',     node.imp?'set':'sym',
-     ()=>{node.imp=!node.imp;render();if(node.imp)nudgeCue(node)}, 'Important');
+     ()=>{node.imp=!node.imp;touch(node);render();if(node.imp)nudgeCue(node)}, 'Important');
   mk('&#128197;', node.when!=null?('set'+(lab2.cls==='late'?' late':'')):'sym',
      ()=>datePick(node), 'When');
   mk('&#8635;', node.repeat?'set':'sym', ()=>repeatPick(node), 'Repeats');
@@ -1017,7 +1087,7 @@ function nudgeCue(node){
 function shift(node,parent,d){
   const i=parent.kids.indexOf(node),j=i+d;
   if(j<0||j>=parent.kids.length)return;
-  parent.kids.splice(i,1);parent.kids.splice(j,0,node);
+  parent.kids.splice(i,1);parent.kids.splice(j,0,node);touch(node);
   render();focus(node.id);
 }
 
@@ -1039,11 +1109,11 @@ function key(e,node,parent){
   }
   if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();
     if(i>0){const up=parent.kids[i-1];parent.kids.splice(i,1);
-      up.collapsed=false;up.kids.push(node);render();focus(node.id)}}
+      up.collapsed=false;up.kids.push(node);touch(node);render();focus(node.id)}}
   if(e.key==='Tab'&&e.shiftKey){e.preventDefault();
     const gp=find(parent.id).parent;
     if(gp&&parent.id!==here().id){parent.kids.splice(i,1);
-      gp.kids.splice(gp.kids.indexOf(parent)+1,0,node);render();focus(node.id)}}
+      gp.kids.splice(gp.kids.indexOf(parent)+1,0,node);touch(node);render();focus(node.id)}}
   if((e.key==='ArrowUp'||e.key==='ArrowDown')&&!e.shiftKey&&!e.altKey&&!e.metaKey&&!e.ctrlKey){
     const sel=getSelection();
     const rows=[...document.querySelectorAll('.t[data-id]')];
@@ -1149,12 +1219,12 @@ function cheerUp(){
   clearTimeout(window._cT);window._cT=setTimeout(()=>e.classList.remove('on'),1500);
 }
 function finish(node){
-  node.done=!node.done;
+  node.done=!node.done;touch(node);
   if(node.done){
     buzz(14);cheerUp();
     /* if it left the screen, it needs a way back — in either mode. */
     if(!keepDone&&fullyDone(node))
-      offerUndo('Taken off the list.','Bring it back',()=>{node.done=false;save();render()});
+      offerUndo('Taken off the list.','Bring it back',()=>{node.done=false;touch(node);save();render()});
   }
   save();
 }
@@ -1214,7 +1284,7 @@ function renderDo(){
     const g=document.createElement('button');g.className='go big';g.textContent='Start it';
     g.onclick=()=>startFocus(one.node);
     const d=document.createElement('button');d.className='cb';d.textContent='Finished it';
-    d.onclick=()=>{one.node.done=true;one.node.pinned=false;render()};
+    d.onclick=()=>{one.node.done=true;one.node.pinned=false;touch(one.node);render()};
     act.append(g,d);
     if(one.node.pinned){
       const un=document.createElement('button');un.className='cb pin on';
@@ -1301,13 +1371,13 @@ function doItem(node){
     lamp.innerHTML=node.lit?'\u25C9':'\u25CE';
     lamp.title=node.lit?'Let it settle back':'Bring it forward';
     lamp.setAttribute('aria-label',lamp.title);
-    lamp.onclick=()=>{node.lit=!node.lit;save();render()};
+    lamp.onclick=()=>{node.lit=!node.lit;touch(node);save();render()};
     meta.appendChild(lamp);
     const pin=document.createElement('button');pin.className='cb pin'+(node.pinned?' on':'');
     pin.textContent=node.pinned?'my one thing':'make this my one thing';
     pin.onclick=()=>{const was=node.pinned;
       pickedUp().forEach(n=>n.pinned=false);
-      node.pinned=!was;save();render()};
+      node.pinned=!was;touch(node);save();render()};
     meta.appendChild(pin);
   }
   w.appendChild(meta);
@@ -1344,7 +1414,7 @@ function endFocus(){clearInterval(fTimer);fRun=false;fNode=null;
   document.getElementById('focus').classList.remove('on');render()}
 document.getElementById('f-pause').onclick=()=>{fRun=!fRun;paintFocus()};
 document.getElementById('f-quit').onclick=endFocus;
-document.getElementById('f-fin').onclick=()=>{if(fNode){fNode.done=true;buzz(22)}endFocus()};
+document.getElementById('f-fin').onclick=()=>{if(fNode){fNode.done=true;touch(fNode);buzz(22)}endFocus()};
 
 /* ---------- expand / collapse everything ---------- */
 let allOpen=false;
@@ -1370,16 +1440,16 @@ function datePick(node){
   [['Today',0],['Tomorrow',1],['This weekend',(6-new Date().getDay()+7)%7||6],
    ['Next week',7],['In a month',30]].forEach(([l,d])=>{
     const b=document.createElement('button');b.className='opt';b.textContent=l;
-    b.onclick=()=>{node.when=at(d);sheet.classList.remove('on');render();nudgeCue(node)};
+    b.onclick=()=>{node.when=at(d);touch(node);sheet.classList.remove('on');render();nudgeCue(node)};
       o.appendChild(b)});
   if(node.when!=null){const c=document.createElement('button');c.className='opt clear';
-    c.textContent='No date';c.onclick=()=>{node.when=null;sheet.classList.remove('on');render()};
+    c.textContent='No date';c.onclick=()=>{node.when=null;touch(node);sheet.classList.remove('on');render()};
     o.appendChild(c)}
   sin.appendChild(o);
   sin.insertAdjacentHTML('beforeend','<div class="lbl">or pick one</div>');
   const inp=document.createElement('input');inp.type='date';
   if(node.when)inp.value=new Date(node.when).toISOString().slice(0,10);
-  inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;
+  inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;touch(node);
     sheet.classList.remove('on');render()};
   sin.appendChild(inp);sheet.classList.add('on');
 }
@@ -1400,13 +1470,13 @@ function huePick(node){
   const o=document.createElement('div');o.className='opts';
   const none=document.createElement('button');none.className='opt';none.textContent='Plain';
   none.setAttribute('aria-pressed',!node.hue);
-  none.onclick=ev=>{ev.stopPropagation();node.hue=null;sheet.classList.remove('on');render()};
+  none.onclick=ev=>{ev.stopPropagation();node.hue=null;touch(node);sheet.classList.remove('on');render()};
   o.appendChild(none);
   Object.keys(HUES).forEach(k=>{
     const b=document.createElement('button');b.className='opt hue';
     b.innerHTML='<span class="sw" style="background:'+HUES[k]+'"></span>'+k;
     b.setAttribute('aria-pressed',node.hue===k);
-    b.onclick=ev=>{ev.stopPropagation();node.hue=k;sheet.classList.remove('on');render()};
+    b.onclick=ev=>{ev.stopPropagation();node.hue=k;touch(node);sheet.classList.remove('on');render()};
     o.appendChild(b)});
   sin.appendChild(o);sheet.classList.add('on');
 }
@@ -1419,14 +1489,14 @@ function repeatPick(node){
     b.setAttribute('aria-pressed',node.repeat===r);
     b.onclick=ev=>{ev.stopPropagation();
       if(node.repeat===r&&r==='daily'){sheet.classList.remove('on');render();return}
-      node.repeat=r;
+      node.repeat=r;touch(node);
       if(r==='weekly'&&node.rDay==null)node.rDay=new Date().getDay();
       if(r==='monthly'&&node.rDate==null)node.rDate=new Date().getDate();
       if(r==='daily'){sheet.classList.remove('on');render();return}
       repeatPick(node)};
     o.appendChild(b)});
   if(node.repeat){const c=document.createElement('button');c.className='opt clear';c.textContent='Never';
-    c.onclick=()=>{node.repeat=null;node.rDay=node.rDate=null;sheet.classList.remove('on');render()};
+    c.onclick=()=>{node.repeat=null;node.rDay=node.rDate=null;touch(node);sheet.classList.remove('on');render()};
     o.appendChild(c)}
   sin.appendChild(o);
 
@@ -1435,7 +1505,7 @@ function repeatPick(node){
     const w=document.createElement('div');w.className='opts';
     WD.forEach((d,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=d;
       b.setAttribute('aria-pressed',node.rDay===i);
-      b.onclick=ev=>{ev.stopPropagation();node.rDay=i;
+      b.onclick=ev=>{ev.stopPropagation();node.rDay=i;touch(node);
         sheet.classList.remove('on');render()};w.appendChild(b)});
     sin.appendChild(w);
   }
@@ -1446,7 +1516,7 @@ function repeatPick(node){
     for(let i=1;i<=31;i++){const b=document.createElement('button');b.className='opt';
       b.style.padding='9px 0';b.style.minWidth='42px';b.textContent=i;
       b.setAttribute('aria-pressed',node.rDate===i);
-      b.onclick=ev=>{ev.stopPropagation();node.rDate=i;
+      b.onclick=ev=>{ev.stopPropagation();node.rDate=i;touch(node);
         sheet.classList.remove('on');render()};w.appendChild(b)}
     sin.appendChild(w);
   }
@@ -1514,6 +1584,57 @@ document.getElementById('gear').onclick=()=>{
     '<div style="font-size:12.5px;color:var(--faint);margin-top:8px;line-height:1.55">'+
     'When a line gets a day or a mark, the cue field takes the cursor. '+
     'It never stops you saving \u2014 a task you cannot write down is worse than one with no cue.</div>');
+
+
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">Sync between devices</div>');
+  const sy=document.createElement('div');sy.className='opts';sy.style.flexWrap='wrap';
+  const syNote=t=>sin.insertAdjacentHTML('beforeend','<div class="hint">'+t+'</div>');
+  const syBtn=(label,fn)=>{const b=document.createElement('button');b.className='opt';
+    b.textContent=label;b.onclick=ev=>{ev.stopPropagation();fn()};sy.appendChild(b)};
+  if(!(SYNC_URL&&SYNC_KEY)){
+    sin.appendChild(sy);
+    syNote('Not available in this build \u2014 no sync server is configured.');
+  }else if(!SY.code){
+    syBtn('Create a sync code',()=>{
+      SY.code=syCodeNew();sySave();
+      syncNow().then(r=>{shutSheet();
+        toastLine(r==='error'
+          ?'Made your code (it is in \u2699), but could not reach the server yet \u2014 it will sync when it can.'
+          :'Syncing. Your code: '+SY.code+' \u2014 it is in \u2699 whenever you need it.')});
+    });
+    syBtn('I have a code',()=>{
+      if(document.getElementById('sy-code'))return;
+      const w=document.createElement('div');w.style.marginTop='8px';w.style.display='flex';w.style.gap='8px';
+      const inp=document.createElement('input');inp.id='sy-code';inp.type='text';
+      inp.placeholder='paste the code from your other device';
+      inp.autocapitalize='off';inp.autocomplete='off';inp.spellcheck=false;
+      inp.style.cssText='flex:1;background:var(--hair);border:none;border-radius:var(--r2);padding:12px 14px;font:inherit;color:var(--ink);outline:none';
+      inp.onclick=ev=>ev.stopPropagation();
+      const go=document.createElement('button');go.className='opt';go.textContent='Join';
+      go.onclick=ev=>{ev.stopPropagation();
+        const c=inp.value.trim().toLowerCase();if(!c)return;
+        SY.code=c;sySave();
+        syncNow().then(r=>{shutSheet();
+          toastLine(r==='error'?'Could not reach the sync server. Kept everything local.'
+            :'Joined. Both devices now share one list.');render()})};
+      inp.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();go.onclick(ev)}};
+      w.append(inp,go);sy.after(w);inp.focus();
+    });
+    sin.appendChild(sy);
+    syNote('One code, no account. Anyone with the code has the list, so treat it like a key.');
+  }else{
+    syBtn('Sync now',()=>{syncNow().then(r=>{
+      toastLine(r==='error'?('Could not sync: '+(SY.err||'no connection'))
+        :r==='merged'?'Synced \u2014 brought in changes from elsewhere.':'Synced.');render()})});
+    syBtn('Copy the code',()=>{navigator.clipboard&&navigator.clipboard.writeText(SY.code)
+      .then(()=>toastLine('Copied.'),()=>toastLine('Could not copy \u2014 it is: '+SY.code))});
+    syBtn('Stop syncing here',()=>{window.__sync.clearCode();shutSheet();
+      toastLine('This device is on its own again. Nothing was deleted anywhere.')});
+    sin.appendChild(sy);
+    syNote('Code: <b style="font-family:monospace">'+SY.code+'</b>'+
+      (SY.err?' \u00b7 last try failed: '+SY.err
+       :SY.last?' \u00b7 last synced '+new Date(SY.last).toLocaleTimeString():''));
+  }
 
   sin.insertAdjacentHTML('beforeend','<div class="lbl">Your list</div>');
   const io=document.createElement('div');io.className='opts';
@@ -1739,10 +1860,14 @@ if(q==='new'){setTimeout(()=>{const g=document.querySelector('.ghost');if(g)g.cl
 let seen=false;
 try{seen=localStorage.getItem('yodo.seen')==='1'}catch(e){}
 if(!seen&&!ROOT.kids.length)setTimeout(startIntro,250);
+if(syncOn())setTimeout(syncNow,600);
 
 /* offline */
 if('serviceWorker' in navigator)
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
+<!-- Anonymous visit counting (GoatCounter): no cookies, no personal data stored. -->
+<script data-goatcounter="https://ssacademic.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
