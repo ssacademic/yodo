@@ -442,6 +442,16 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 #tip .later{background:transparent;color:var(--faint);margin-left:0;padding:8px 4px}
 
 /* ---------- undo ---------- */
+/* a word when you finish something. it drops in under the bar, centred,
+   and leaves quickly — the undo lives at the bottom, so they never meet. */
+#cheer{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 74px);z-index:60;
+  display:flex;justify-content:center;pointer-events:none}
+#cheer b{display:inline-block;background:var(--acc);color:var(--paper);
+  border-radius:var(--rp);padding:9px 18px;font-size:calc(14.5px*var(--fs));font-weight:500;
+  white-space:nowrap;opacity:0;transform:translateY(-12px) scale(.96);
+  transition:.28s var(--spring);box-shadow:0 8px 22px -8px rgba(42,36,28,.55)}
+#cheer.on b{opacity:1;transform:none}
+
 #undo{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:70;
   background:var(--ink);color:var(--bg);border-radius:var(--rp);
   padding:11px var(--s2) 11px var(--s4);display:flex;align-items:center;gap:var(--s3);
@@ -458,13 +468,16 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .sin{width:100%;max-width:620px;max-height:86dvh;overflow-y:auto;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
   background:var(--paper);border-radius:var(--r3) var(--r3) 0 0;
-  padding:var(--s4) var(--s5) calc(env(safe-area-inset-bottom) + var(--s5));
+  padding:0 var(--s5) calc(env(safe-area-inset-bottom) + var(--s5));
   animation:up .3s var(--ease)}
 @keyframes up{from{transform:translateY(28px);opacity:.5}to{transform:none;opacity:1}}
-.grip{width:36px;height:4px;border-radius:var(--rp);background:var(--hair);margin:0 auto var(--s3);
-  position:sticky;top:0;z-index:3}
-.shead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3);
-  position:sticky;top:0;background:var(--paper);padding-bottom:var(--s2);z-index:2}
+.grip{width:36px;height:4px;border-radius:var(--rp);background:var(--hair);margin:0 auto var(--s3)}
+.shead{position:sticky;top:0;z-index:5;background:var(--paper);
+  margin:0 calc(-1 * var(--s5)) var(--s3);
+  padding:var(--s3) var(--s5) var(--s3);
+  border-bottom:1px solid var(--hair);border-radius:var(--r3) var(--r3) 0 0}
+.srow{display:flex;align-items:center;gap:var(--s3)}
+.srow h3{margin:0;flex:1}
 .shead h3{margin:0;flex:1}
 .sx{width:40px;height:40px;border-radius:var(--rp);background:var(--hair);color:var(--dim);
   display:grid;place-items:center;font-size:15px;flex:none;position:relative}
@@ -563,6 +576,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
   </div>
 </div>
 
+<div id="cheer"><b></b></div>
+
 <div id="undo"><span id="undo-t"></span><button id="undo-b">Undo</button></div>
 <div class="sheet" id="sheet"><div class="sin" id="sin"></div></div>
 
@@ -593,7 +608,8 @@ var askCue=false;
 const KEY='yodo.v1';
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(
-    {tree:ROOT,zoom,mode,uid,doLens,askCue,shut,theme:document.body.dataset.theme,
+    {tree:ROOT,zoom,mode,uid,doLens,askCue,shut,keepDone,cheer,
+     theme:document.body.dataset.theme,
      fs:document.documentElement.style.getPropertyValue('--fs'),
      ff:document.documentElement.style.getPropertyValue('--ff'),
      flen:F_LEN}))}catch(e){}
@@ -613,6 +629,8 @@ function load(){
     if(d.doLens)doLens=d.doLens;
     if(typeof d.askCue==='boolean')askCue=d.askCue;
     if(d.shut)shut=d.shut;
+    if(typeof d.keepDone==='boolean')keepDone=d.keepDone;
+    if(typeof d.cheer==='boolean')cheer=d.cheer;
     return d;
   }catch(e){return false}
 }
@@ -635,6 +653,15 @@ const here=()=>{
 function stats(x){let d=0,t=0;for(const k of x.kids){t++;const s=stats(k);
   if(k.done||(k.kids.length&&s.total&&s.done===s.total))d++}return{done:d,total:t}}
 const isDone=x=>{const s=stats(x);return x.done||(x.kids.length&&s.total&&s.done===s.total)};
+/* ticked, and nothing unfinished hiding underneath it. only these may be
+   hidden when you choose "take it off the list" — otherwise ticking a parent
+   would take its unfinished children with it. */
+function fullyDone(n){
+  if(!n.done)return false;
+  let ok=true;
+  (function walk(x){x.kids.forEach(k=>{if(!k.done)ok=false;walk(k)})})(n);
+  return ok;
+}
 
 function label(ms){
   if(ms==null)return null;
@@ -762,9 +789,14 @@ function toastLine(msg){offerUndo(msg,null)}
 
 /* ---------- undo: nothing destructive is one-way ---------- */
 let undoFn=null,undoT;
-function offerUndo(msg,fn){
-  undoFn=fn||null;
+function offerUndo(msg,label,fn){
+  /* callers turn up as (msg, fn) and as (msg, label, fn). accept both rather
+     than leave a landmine that only goes off when someone presses Undo. */
+  if(typeof label==='function'){fn=label;label='Undo'}
+  fn=(typeof fn==='function')?fn:null;
+  undoFn=fn;
   document.getElementById('undo-t').textContent=msg;
+  document.getElementById('undo-b').textContent=label||'Undo';
   document.getElementById('undo-b').style.display=fn?'':'none';
   const u=document.getElementById('undo');u.classList.add('on');
   clearTimeout(undoT);undoT=setTimeout(()=>{u.classList.remove('on');undoFn=null},5000);
@@ -809,7 +841,9 @@ function render(){
 
 function kidsEl(parent,depth){
   const box=document.createElement('div');box.className='kids';
-  parent.kids.forEach(k=>box.appendChild(rowEl(k,parent,depth)));
+  parent.kids
+    .filter(k=>keepDone||!fullyDone(k))
+    .forEach(k=>box.appendChild(rowEl(k,parent,depth)));
   return box;
 }
 
@@ -832,8 +866,8 @@ function rowEl(node,parent,depth){
   const tick=document.createElement('button');
   tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
   tick.onclick=e=>{e.stopPropagation();
-    node.done=!node.done;
-    if(node.done){buzz(14);if(openId===node.id)openId=null}
+    finish(node);
+    if(node.done&&openId===node.id)openId=null;
     render()};
 
   const tx=document.createElement('div');
@@ -1066,7 +1100,8 @@ function pickedUp(){
   const out=[];
   (function walk(x){
     x.kids.forEach(k=>{
-      if(!isDone(k)&&!k.kids.length&&(k.when!=null||k.urgent||k.imp||k.star))out.push(k);
+      const picked=(k.when!=null||k.urgent||k.imp||k.star);
+      if(!k.kids.length&&picked&&(!isDone(k)||keepDone))out.push(k);
       if(!isDone(k))walk(k);
     });
   })(ROOT);
@@ -1089,6 +1124,40 @@ const BY_WEIGHT=[
 ];
 let doLens='time';   /* first run only; after that it remembers */
 var shut={};         /* which bands you have folded away */
+var keepDone=true;   /* a finished line stays where it is */
+var cheer=true;      /* and gets a word for it */
+
+const CHEERS=[
+  ['\u{1F389}','Done.'],           ['\u2728','Nice one.'],
+  ['\u{1F44F}','Off your plate.'], ['\u{1F331}','Good.'],
+  ['\u{1F3AF}','One down.'],       ['\u{1F44C}','Well done.'],
+  ['\u{1F4A8}','Gone.'],           ['\u{1F4AA}','Handled.'],
+  ['\u2705','Off the list.'],      ['\u{1F525}','That was the hard bit.'],
+  ['\u{1F9F9}','Tidy.'],           ['\u{1F3C1}','That is that.']
+];
+let lastCheer=-1, cheerAt=0;
+function cheerUp(){
+  if(!cheer)return;
+  const now=Date.now();
+  if(now-cheerAt<1200)return;      /* rattling through a list should not spam */
+  cheerAt=now;
+  let i;do{i=Math.floor(Math.random()*CHEERS.length)}while(i===lastCheer&&CHEERS.length>1);
+  lastCheer=i;
+  const e=document.getElementById('cheer');
+  e.querySelector('b').textContent=CHEERS[i][0]+'  '+CHEERS[i][1];
+  e.classList.add('on');
+  clearTimeout(window._cT);window._cT=setTimeout(()=>e.classList.remove('on'),1500);
+}
+function finish(node){
+  node.done=!node.done;
+  if(node.done){
+    buzz(14);cheerUp();
+    /* if it left the screen, it needs a way back — in either mode. */
+    if(!keepDone&&fullyDone(node))
+      offerUndo('Taken off the list.','Bring it back',()=>{node.done=false;save();render()});
+  }
+  save();
+}
 
 /* if you only do one thing. the rule is fixed and it says what it is. */
 function theOne(pool){
@@ -1132,7 +1201,7 @@ function renderDo(){
 
   const pool=pickedUp().sort((a,b)=>(a.when||Infinity)-(b.when||Infinity));
 
-  const one=theOne(pool);
+  const one=theOne(pool.filter(n=>!isDone(n)));
   if(one){
     const h=document.createElement('div');h.className='theone';
     const anc=ancestry(one.node.id).map(a=>a.t).join('  \u203A  ');
@@ -1206,7 +1275,7 @@ function doItem(node){
   tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
   if(isDone(node)){tick.style.background='var(--acc)';tick.style.borderColor='var(--acc)';
     tick.querySelector('svg').style.strokeDashoffset='0'}
-  tick.onclick=()=>{node.done=!node.done;render()};
+  tick.onclick=()=>{finish(node);render()};
   const tx=document.createElement('div');tx.className='dotext';tx.textContent=node.t;
   line.append(tick,tx);
   const fl=[];
@@ -1289,8 +1358,8 @@ document.getElementById('fold').onclick=()=>{
 /* ---------- date ---------- */
 const sheet=document.getElementById('sheet'),sin=document.getElementById('sin');
 function sheetHead(title){
-  return '<div class="grip"></div><div class="shead"><h3>'+title+'</h3>'+
-         '<button class="sx" data-shut aria-label="Close">&#10005;</button></div>';
+  return '<div class="shead"><div class="grip"></div><div class="srow"><h3>'+title+'</h3>'+
+         '<button class="sx" data-shut aria-label="Close">&#10005;</button></div></div>';
 }
 function shutSheet(){sheet.classList.remove('on')}
 sin.addEventListener('click',e=>{if(e.target.closest('[data-shut]'))shutSheet()});
@@ -1387,7 +1456,8 @@ sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('on')};
 
 /* ---------- look ---------- */
 document.getElementById('gear').onclick=()=>{
-  sin.innerHTML=sheetHead('Look');
+  sin.innerHTML=sheetHead('Settings');
+  sin.insertAdjacentHTML('beforeend','<div class="lbl" style="margin-top:4px">Look</div>');
   const row=(title,items,cur,fn)=>{
     sin.insertAdjacentHTML('beforeend','<div class="lbl">'+title+'</div>');
     const o=document.createElement('div');o.className='opts';
@@ -1410,6 +1480,27 @@ document.getElementById('gear').onclick=()=>{
     '<b>Merge</b> folds another device\u2019s backup into this one \u2014 newest change '+
     'per line wins, nothing is lost. <b>Restore</b> replaces everything. '+
     'This device is <code>'+DEVICE+'</code>.</div>');
+
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">Finishing</div>');
+  { const o=document.createElement('div');o.className='opts';
+    [['Leave it in place, struck through',true],['Take it off the list',false]].forEach(([l,v])=>{
+      const b=document.createElement('button');b.className='opt';b.textContent=l;
+      b.setAttribute('aria-pressed',keepDone===v);
+      b.onclick=ev=>{ev.stopPropagation();keepDone=v;save();document.getElementById('gear').click()};
+      o.appendChild(b)});
+    sin.appendChild(o);
+    const o2=document.createElement('div');o2.className='opts';o2.style.marginTop='7px';
+    [['Say something',true],['Stay quiet',false]].forEach(([l,v])=>{
+      const b=document.createElement('button');b.className='opt';b.textContent=l;
+      b.setAttribute('aria-pressed',cheer===v);
+      b.onclick=ev=>{ev.stopPropagation();cheer=v;save();
+        if(v)cheerUp();document.getElementById('gear').click()};
+      o2.appendChild(b)});
+    sin.appendChild(o2);
+    sin.insertAdjacentHTML('beforeend',
+      '<div style="font-size:12px;color:var(--faint);margin-top:8px;line-height:1.55">'+
+      'Applies in Map and in Do. A line with unfinished parts under it always stays, '+
+      'whichever you choose. Undo is offered when something disappears.</div>'); }
 
   sin.insertAdjacentHTML('beforeend','<div class="lbl">Cues</div>');
   const cq=document.createElement('div');cq.className='opts';
@@ -1480,7 +1571,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 11</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 14</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
