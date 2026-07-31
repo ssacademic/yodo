@@ -1,5 +1,5 @@
 /* Cache the shell so it opens with no signal. Bump CACHE on every deploy. */
-const CACHE = 'yodo-a18';
+const CACHE = 'yodo-a19';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
