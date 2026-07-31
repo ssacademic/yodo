@@ -496,7 +496,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .opt.clear{color:var(--late)}
 input[type=date]{width:100%;margin-top:var(--s3);background:var(--hair);border:none;
   border-radius:var(--r2);padding:12px 14px;font:inherit;color:var(--ink);outline:none}
-.lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+.lbl{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
   margin:var(--s4) 0 var(--s2)}
 .hint{font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.6;margin-top:var(--s2)}
 .foot{margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--hair);
@@ -531,6 +531,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
       </div>
       <div class="icons">
         <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
+        <button class="ico" id="tally" aria-label="What got finished" style="display:none">◨</button>
         <button class="ico" id="gear" aria-label="Look">⚙</button>
       </div>
     </div>
@@ -881,6 +882,7 @@ function render(){
   document.getElementById('tree').style.display   = mode==='map'?'':'none';
   document.getElementById('dolist').style.display = mode==='do' ?'':'none';
   document.getElementById('fold').style.visibility = mode==='map'?'':'hidden';
+  document.getElementById('tally').style.display = mode==='do'?'':'none';
   document.querySelectorAll('#modes button').forEach(b=>
     b.classList.toggle('on',b.dataset.m===mode));
   document.getElementById('bar2').style.display = mode==='do'?'none':'';
@@ -1084,10 +1086,26 @@ function nudgeCue(node){
   },70);
 }
 
+function ordSnap(parent){const m={};
+  parent.kids.forEach((k,i)=>m[k.id]=(k.ord!=null?k.ord:i*100));return m}
+function placeOrd(parent,node,snap){
+  const j=parent.kids.indexOf(node);
+  const pv=parent.kids[j-1], nx=parent.kids[j+1];
+  const a=pv?(snap[pv.id]!=null?snap[pv.id]:(pv.ord!=null?pv.ord:0)):null;
+  const b=nx?(snap[nx.id]!=null?snap[nx.id]:(nx.ord!=null?nx.ord:0)):null;
+  if(a!=null&&b!=null){
+    if(b-a>1){node.ord=(a+b)/2;touch(node)}
+    else{parent.kids.forEach((k,i)=>{k.ord=i*100;touch(k)})}
+  }else if(a!=null){node.ord=a+100;touch(node)}
+  else if(b!=null){node.ord=b-100;touch(node)}
+  else{node.ord=0;touch(node)}
+}
 function shift(node,parent,d){
   const i=parent.kids.indexOf(node),j=i+d;
   if(j<0||j>=parent.kids.length)return;
-  parent.kids.splice(i,1);parent.kids.splice(j,0,node);touch(node);
+  const snap=ordSnap(parent);
+  parent.kids.splice(i,1);parent.kids.splice(j,0,node);
+  placeOrd(parent,node,snap);
   render();focus(node.id);
 }
 
@@ -1098,22 +1116,29 @@ function key(e,node,parent){
     e.preventDefault();
     const sel=getSelection(), atStart = sel && sel.anchorOffset===0 && node.t;
     if(atStart){            /* open a line ABOVE; this one drops down with its parts */
-      parent.kids.splice(i,0,nd(''));
+      const snap=ordSnap(parent),f=nd('');
+      parent.kids.splice(i,0,f);placeOrd(parent,f,snap);
       openId=node.id;render();focus(node.id);
     }else{
-      const f=nd('');parent.kids.splice(i+1,0,f);openId=f.id;render();focus(f.id);
+      const snap=ordSnap(parent),f=nd('');
+      parent.kids.splice(i+1,0,f);placeOrd(parent,f,snap);
+      openId=f.id;render();focus(f.id);
     }
   }
   if((e.key==='ArrowUp'||e.key==='ArrowDown')&&e.shiftKey&&(e.altKey||e.metaKey)){
     e.preventDefault();shift(node,parent,e.key==='ArrowUp'?-1:1);
   }
   if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();
-    if(i>0){const up=parent.kids[i-1];parent.kids.splice(i,1);
-      up.collapsed=false;up.kids.push(node);touch(node);render();focus(node.id)}}
+    if(i>0){const up=parent.kids[i-1];const snap=ordSnap(up);
+      parent.kids.splice(i,1);
+      up.collapsed=false;up.kids.push(node);placeOrd(up,node,snap);
+      render();focus(node.id)}}
   if(e.key==='Tab'&&e.shiftKey){e.preventDefault();
     const gp=find(parent.id).parent;
-    if(gp&&parent.id!==here().id){parent.kids.splice(i,1);
-      gp.kids.splice(gp.kids.indexOf(parent)+1,0,node);touch(node);render();focus(node.id)}}
+    if(gp&&parent.id!==here().id){const snap=ordSnap(gp);
+      parent.kids.splice(i,1);
+      gp.kids.splice(gp.kids.indexOf(parent)+1,0,node);placeOrd(gp,node,snap);
+      render();focus(node.id)}}
   if((e.key==='ArrowUp'||e.key==='ArrowDown')&&!e.shiftKey&&!e.altKey&&!e.metaKey&&!e.ctrlKey){
     const sel=getSelection();
     const rows=[...document.querySelectorAll('.t[data-id]')];
@@ -1151,7 +1176,9 @@ function ghost(host,parent){
       : (parent.id===ROOT.id ? 'put the first thing down'
          : 'nothing inside yet \u2014 what is the first part?'))+'</span>';
   g.onclick=e=>{e.stopPropagation();
-    const f=nd('');parent.kids.push(f);openId=f.id;render();focus(f.id)};
+    const snap=ordSnap(parent),f=nd('');
+    parent.kids.push(f);placeOrd(parent,f,snap);
+    openId=f.id;render();focus(f.id)};
   host.appendChild(g);
 }
 
@@ -1219,7 +1246,15 @@ function cheerUp(){
   clearTimeout(window._cT);window._cT=setTimeout(()=>e.classList.remove('on'),1500);
 }
 function finish(node){
+  const kidsAllDone=node.kids.length&&(()=>{const st=stats(node);
+    return st.total&&st.done===st.total})();
+  if(kidsAllDone){
+    toastLine(node.done?'Still done \u2014 all its parts are finished. Untick a part to reopen it.'
+      :'Done because all its parts are. Untick a part to reopen it.');
+    return;
+  }
   node.done=!node.done;touch(node);
+  if(node.done)node.doneAt=Date.now();else delete node.doneAt;
   if(node.done){
     buzz(14);cheerUp();
     /* if it left the screen, it needs a way back — in either mode. */
@@ -1284,7 +1319,7 @@ function renderDo(){
     const g=document.createElement('button');g.className='go big';g.textContent='Start it';
     g.onclick=()=>startFocus(one.node);
     const d=document.createElement('button');d.className='cb';d.textContent='Finished it';
-    d.onclick=()=>{one.node.done=true;one.node.pinned=false;touch(one.node);render()};
+    d.onclick=()=>{one.node.done=true;one.node.doneAt=Date.now();one.node.pinned=false;touch(one.node);render()};
     act.append(g,d);
     if(one.node.pinned){
       const un=document.createElement('button');un.className='cb pin on';
@@ -1388,17 +1423,30 @@ document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;openId=null;render()});
 
 /* ---------- focus: 25 minutes, no score kept ---------- */
-let fNode=null,fLeft=0,fTimer=null,fRun=false;
+let fNode=null,fLeft=0,fTimer=null,fRun=false,fEnd=0,fRang=false,fLock=null;
 let F_LEN=25*60;
+/* the clock is a timestamp, not a countdown: screen off, tab away, come back
+   \u2014 the remaining time is simply recomputed, so it never drifts or stalls. */
+function fSync(){if(fRun)fLeft=Math.max(0,Math.round((fEnd-Date.now())/1000));
+  if(fRun&&fLeft<=0){fRun=false;
+    if(!fRang){fRang=true;buzz([120,80,120,80,240]);
+      const p=document.getElementById('f-pause');if(p)p.textContent='Time';}}}
+function wakeGrab(){if(navigator.wakeLock&&navigator.wakeLock.request)
+  navigator.wakeLock.request('screen').then(l=>{fLock=l}).catch(()=>{})}
+function wakeDrop(){if(fLock){try{fLock.release()}catch(e){}fLock=null}}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&fNode){fSync();paintFocus();
+    if(fRun)wakeGrab();}});
 function startFocus(node){
-  fNode=node;fLeft=F_LEN;fRun=true;
+  fNode=node;fLeft=F_LEN;fRun=true;fRang=false;fEnd=Date.now()+F_LEN*1000;
   document.getElementById('f-roots').textContent=
     ancestry(node.id).map(a=>a.t).join('  \u203A  ');
   document.getElementById('f-title').textContent=node.t;
   document.getElementById('focus').classList.add('on');
+  wakeGrab();
   paintFocus();
   clearInterval(fTimer);
-  fTimer=setInterval(()=>{if(!fRun)return;fLeft--;if(fLeft<=0){fLeft=0;fRun=false}paintFocus()},1000);
+  fTimer=setInterval(()=>{if(!fRun)return;fSync();paintFocus()},500);
 }
 function paintFocus(){
   const m=String(Math.floor(fLeft/60)).padStart(2,'0'),
@@ -1410,11 +1458,50 @@ function paintFocus(){
   arc.setAttribute('stroke-dashoffset',C*(1-fLeft/F_LEN));
   document.getElementById('f-pause').textContent=fRun?'Pause':'Carry on';
 }
-function endFocus(){clearInterval(fTimer);fRun=false;fNode=null;
+function endFocus(){clearInterval(fTimer);fRun=false;fNode=null;wakeDrop();
   document.getElementById('focus').classList.remove('on');render()}
-document.getElementById('f-pause').onclick=()=>{fRun=!fRun;paintFocus()};
+document.getElementById('f-pause').onclick=()=>{
+  if(fLeft<=0)return;
+  fRun=!fRun;
+  if(fRun){fEnd=Date.now()+fLeft*1000;wakeGrab()}else wakeDrop();
+  paintFocus()};
 document.getElementById('f-quit').onclick=endFocus;
-document.getElementById('f-fin').onclick=()=>{if(fNode){fNode.done=true;touch(fNode);buzz(22)}endFocus()};
+document.getElementById('f-fin').onclick=()=>{if(fNode){fNode.done=true;fNode.doneAt=Date.now();touch(fNode);buzz(22)}endFocus()};
+
+/* ---------- the tally ---------- */
+function tallyCounts(days){
+  const out=new Array(days).fill(0);
+  const day0=new Date();day0.setHours(0,0,0,0);
+  (function walk(n){n.kids.forEach(k=>{
+    if(k.done&&k.doneAt&&!k.kids.length){   /* only leaves are counted (rule 2) */
+      const d=Math.floor((day0.getTime()+86400000-k.doneAt)/86400000);
+      if(d>=0&&d<days)out[days-1-d]++;
+    }
+    walk(k)})})(ROOT);
+  return out;
+}
+document.getElementById('tally').onclick=()=>{
+  const sheet=document.getElementById('sheet'),sin=document.getElementById('sin');
+  sin.innerHTML='<div class="shead"><div class="grip"></div><div class="srow">'+
+    '<h3>Finished</h3><button class="sx" data-shut aria-label="Close">\u00D7</button></div></div>';
+  const c=tallyCounts(14);
+  const thisWeek=c.slice(7).reduce((a,b)=>a+b,0), lastWeek=c.slice(0,7).reduce((a,b)=>a+b,0);
+  const max=Math.max(1,...c);
+  const bars=c.map((v,i)=>{
+    const d=new Date(Date.now()-(13-i)*86400000);
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">'+
+      '<div style="width:100%;max-width:22px;height:'+Math.round(4+56*v/max)+'px;'+
+      'border-radius:4px;background:'+(v?'var(--acc)':'var(--hair)')+';align-self:center"></div>'+
+      '<span style="font-size:10px;color:var(--faint)">'+'SMTWTFS'[d.getDay()]+'</span></div>';
+  }).join('');
+  sin.insertAdjacentHTML('beforeend',
+    '<div class="lbl">Last two weeks</div>'+
+    '<div style="display:flex;align-items:flex-end;gap:4px;padding:6px 0 2px">'+bars+'</div>'+
+    '<div class="hint">This week <b>'+thisWeek+'</b> \u00b7 last week <b>'+lastWeek+'</b>. '+
+    'Only lines themselves count \u2014 a project is its parts. '+
+    'Counting starts from today; earlier ticks carry no date.</div>');
+  sheet.classList.add('on');
+};
 
 /* ---------- expand / collapse everything ---------- */
 let allOpen=false;
@@ -1743,7 +1830,11 @@ const SLIDES=[
      '<b>swipe sideways</b>.'},
   {m:'\u23F1', h:'Then just do things',
    p:'Mark a line <b>\u23F1 urgent</b> or <b>Imp</b>ortant, or give it a day, and it turns up '+
-     'in <b>Do</b> \u2014 with one thing at the top, and why it was chosen.'}
+     'in <b>Do</b> \u2014 with one thing at the top, and why it was chosen.'},
+  {m:'\u2699', h:'Also in here',
+   p:'A <b>focus timer</b> on the one thing. <b>Sync between devices</b> with a single code. '+
+     '<b>Repeats</b>, <b>themes</b>, <b>text sizes</b>, and <b>backups</b> \u2014 all under '+
+     '<b>\u2699</b>, whenever you want them. That is the tour.'}
 ];
 let slide=0;
 function paintIntro(){
