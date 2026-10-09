@@ -89,6 +89,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 .note:focus{font-size:16px}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:var(--r1)}
 main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow-y:auto}
+@media (min-width:700px) and (not (pointer:coarse)){
+  html,body{height:auto;min-height:100%}
+  main{height:auto;min-height:100dvh;overflow:visible}
+}
 
 /* ---------- head ---------- */
 .top{position:sticky;top:0;z-index:20;background:var(--bg);
@@ -302,7 +306,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
   box-shadow:0 1px 3px #2a241c1a;font-weight:500}
 
 /* ---------- DO: chronological, check-off only ---------- */
-.theone{background:var(--paper);border-radius:var(--r3);padding:var(--s5) var(--s5) var(--s4);
+.theone{position:relative;background:var(--paper);border-radius:var(--r3);padding:var(--s5) var(--s5) var(--s4);
   margin:var(--s4) 0 var(--s2);box-shadow:0 10px 30px -14px rgba(42,36,28,.35),0 1px 2px rgba(42,36,28,.06);
   border-top:3px solid var(--acc)}
 .theone .lead{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc-t);
@@ -322,7 +326,31 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .go.big{padding:11px 22px;font-size:calc(14.5px*var(--fs))}
 
 .lens{display:flex;gap:2px;background:var(--hair);border-radius:var(--rp);padding:2px;
-  width:fit-content;margin:var(--s2) 0 0}
+  width:fit-content;flex:none}
+.dobar{display:flex;align-items:center;gap:8px;margin:var(--s2) 0 0;min-width:0}
+.scope{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 12px;min-width:0;
+  border-radius:var(--rp);font-size:calc(12.5px*var(--fs));color:var(--dim);flex:0 1 auto}
+.scope .sl{color:var(--faint)}
+.scope .sv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:9.5em}
+.scope .sc{font-size:10px;color:var(--faint)}
+.scope.on{background:color-mix(in srgb,var(--acc) 15%,transparent);color:var(--acc-t)}
+.scope.on .sl,.scope.on .sc{color:var(--acc-t)}
+.scopelist{display:flex;flex-direction:column}
+.scopeopt{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 14px;text-align:left;
+  border-radius:var(--r2);font-size:calc(15px*var(--fs));color:var(--ink)}
+.scopeopt .st{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scopeopt .sn{font-size:calc(12.5px*var(--fs));color:var(--faint)}
+.scopeopt.on{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc-t);font-weight:500}
+.ohide{position:absolute;top:6px;right:6px;width:44px;height:44px;border-radius:50%;
+  color:var(--faint);font-size:13px;display:grid;place-items:center}
+.ohide:hover{background:var(--hair);color:var(--ink)}
+.onehid{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  min-height:44px;margin:var(--s4) 0 var(--s2);padding:0 var(--s4);border-radius:var(--r2);
+  background:var(--hair);font-size:calc(12.5px*var(--fs));color:var(--dim);text-align:left}
+.onehid b{color:var(--acc-t);font-weight:500}
+.dostep{font-size:calc(11.5px*var(--fs));letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.cb.showall{margin-top:var(--s4);font-size:calc(13px*var(--fs));color:var(--acc-t);
+  background:color-mix(in srgb,var(--acc) 12%,transparent);padding:10px 16px}
 .lens button{padding:11px 16px;border-radius:var(--rp);min-height:44px;
   font-size:calc(12.5px*var(--fs));
   color:var(--dim);transition:background .22s,color .22s}
@@ -458,7 +486,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
   font-size:calc(14px*var(--fs));opacity:0;pointer-events:none;
   transition:.28s var(--spring);box-shadow:0 10px 30px -10px #2a241c66}
 #undo.on{opacity:.97;transform:translate(-50%,0);pointer-events:auto}
-#undo button{color:var(--acc-t);font-weight:500;padding:4px 10px;border-radius:var(--rp);
+#undo button{color:var(--acc-t);font-weight:500;padding:4px 10px;border-radius:var(--rp);white-space:nowrap;flex:none;
   background:#ffffff1a}
 
 /* ---------- sheets ---------- */
@@ -640,6 +668,8 @@ function sane(n,depth,seen){
   if(n.rDate!=null&&!(Number.isInteger(n.rDate)&&n.rDate>=1&&n.rDate<=31))n.rDate=null;
   if(n.hue!=null&&!HUE_KEYS.includes(n.hue))n.hue=null;
   if(n.touched!=null&&!Number.isFinite(n.touched))n.touched=0;
+  if(n.mv!=null&&!Number.isFinite(n.mv))n.mv=0;
+  if(n.ord!=null&&!Number.isFinite(n.ord))delete n.ord;
   n.done=!!n.done;
   n.kids=Array.isArray(n.kids)?n.kids.map(k=>sane(k,depth+1,seen)).filter(Boolean):[];
   return n;
@@ -658,15 +688,33 @@ function tallyUnmark(node){if(TALLY[node.id]!=null){delete TALLY[node.id];tallyS
    A change without a clock loses every merge, which is how alpha 15 found that
    no line had ever been stamped. This makes that class of bug impossible. */
 let SIG={};
-const sigOf=(n,pid)=>JSON.stringify([pid,n.t,n.note,n.done,n.when,n.urgent,n.imp,n.star,
-  n.repeat,n.rDay,n.rDate,n.hue,n.pinned,n.lit,n.ord,n.doneAt]);
+const sigOf=n=>JSON.stringify([n.t,n.note,n.done,n.when,n.urgent,n.imp,n.star,
+  n.repeat,n.rDay,n.rDate,n.hue,n.pinned,n.lit,n.doneAt]);
+let PSIG={};
 function stamp(seedOnly){
-  const now=Date.now(),next={};
+  const now=Date.now(),next={},pnext={};
   (function walk(x){x.kids.forEach(k=>{
-    const sg=sigOf(k,x.id);
+    const sg=sigOf(k), ps=x.id+'|'+k.ord;
     if(!seedOnly&&SIG[k.id]!==undefined&&SIG[k.id]!==sg)k.touched=Math.max(k.touched||0,now);
-    next[k.id]=sg;walk(k)})})(ROOT);
-  SIG=next;
+    if(!seedOnly&&PSIG[k.id]!==undefined&&PSIG[k.id]!==ps)k.mv=Math.max(k.mv||0,now);
+    next[k.id]=sg;pnext[k.id]=ps;walk(k)})})(ROOT);
+  SIG=next;PSIG=pnext;
+}
+/* the stored order must equal the order on screen. any list where it does not
+   (lines from before alpha 18, or data from an older build) is renumbered from
+   what is on screen. On a syncing device this waits for the first pull, so a
+   device whose order went wrong cannot overrule one whose order is right. */
+let posReady=false;
+function normalizeOrds(){
+  if(!posReady)return 0;
+  let n=0;const now=Date.now();
+  (function w(x){
+    let ok=true,prev=-Infinity;
+    for(const k of x.kids){if(!Number.isFinite(k.ord)||k.ord<=prev){ok=false;break}prev=k.ord}
+    if(!ok){x.kids.forEach((k,i)=>{k.ord=i*1024;k.mv=now});n++}
+    x.kids.forEach(w);
+  })(ROOT);
+  return n;
 }
 /* the only way the whole tree is swapped: a merge, a restore, an undo of either.
    Afterwards nothing may still hold the old objects. */
@@ -678,9 +726,10 @@ function replaceRoot(tree){
   if(typeof fNode!=='undefined'&&fNode){const f=find(fNode.id);fNode=f?f.node:null}
 }
 function save(){
+  normalizeOrds();
   stamp(false);
   try{localStorage.setItem(KEY,JSON.stringify(
-    {tree:ROOT,zoom,mode,uid,doLens,askCue,shut,keepDone,cheer,
+    {tree:ROOT,zoom,mode,uid,doLens,doScope,oneOffUntil,askCue,shut,keepDone,cheer,
      theme:document.body.dataset.theme,
      fs:document.documentElement.style.getPropertyValue('--fs'),
      ff:document.documentElement.style.getPropertyValue('--ff'),
@@ -700,6 +749,8 @@ function load(){
     if(d.ff)document.documentElement.style.setProperty('--ff',d.ff);
     if(d.flen)F_LEN=d.flen;
     if(d.doLens)doLens=d.doLens;
+    if(typeof d.doScope==='string')doScope=d.doScope;
+    if(Number.isFinite(d.oneOffUntil))oneOffUntil=d.oneOffUntil;
     if(typeof d.askCue==='boolean')askCue=d.askCue;
     if(d.shut)shut=d.shut;
     if(typeof d.keepDone==='boolean')keepDone=d.keepDone;
@@ -723,18 +774,32 @@ const here=()=>{
   zoom=ROOT.id;openId=null;
   return ROOT;
 };
-function stats(x){let d=0,t=0;for(const k of x.kids){t++;const s=stats(k);
-  if(k.done||(k.kids.length&&s.total&&s.done===s.total))d++}return{done:d,total:t}}
-const isDone=x=>{const s=stats(x);return x.done||(x.kids.length&&s.total&&s.done===s.total)};
-/* ticked, and nothing unfinished hiding underneath it. only these may be
-   hidden when you choose "take it off the list" — otherwise ticking a parent
-   would take its unfinished children with it. */
-function fullyDone(n){
-  if(!n.done)return false;
-  let ok=true;
-  (function walk(x){x.kids.forEach(k=>{if(!k.done)ok=false;walk(k)})})(n);
-  return ok;
+/* RULE 2, kept everywhere: only lines without parts are counted, and a line
+   WITH parts is done exactly when all of them are. It has no tick of its own.
+   (It used to. Ticking a parent then hid its open parts from Do, and a parent
+   ticked before it grew parts hid even an urgent new part.) */
+function stats(x){let d=0,t=0;
+  (function w(n){n.kids.forEach(k=>{if(k.kids.length)w(k);else{t++;if(k.done)d++}})})(x);
+  return{done:d,total:t}}
+const isDone=x=>{if(!x.kids.length)return !!x.done;const s=stats(x);return s.total>0&&s.done===s.total};
+/* only finished things may be taken off the list: a line with an open part
+   under it never disappears */
+const fullyDone=n=>isDone(n);
+/* a line's own marks put it in Do */
+const marked=n=>n.when!=null||!!n.urgent||!!n.imp||!!n.star;
+function firstOpenLeaf(n){
+  for(const k of n.kids){if(isDone(k))continue;if(!k.kids.length)return k;
+    const r=firstOpenLeaf(k);if(r)return r}
+  return null;
 }
+/* a line that gained parts loses its own tick; a pin on a line that is no
+   longer marked is forgotten, so it cannot ambush the one-thing card later */
+function tidyTree(){
+  (function w(x){x.kids.forEach(k=>{
+    if(k.kids.length&&k.done){k.done=false;delete k.doneAt;touch(k)}
+    w(k)})})(ROOT);
+}
+const unpinIfBare=n=>{if(n.pinned&&!marked(n)){doPool();if(!EFF.has(n))n.pinned=false}};
 
 function label(ms){
   if(ms==null)return null;
@@ -830,7 +895,7 @@ function rebuild(rows,rootId,rootTitle){
     if(!p)p=root;                       /* an orphan joins the root, never vanishes */
     p.kids.push(me);
   });
-  (function sort(n){n.kids.sort((a,b)=>(a._o||0)-(b._o||0));
+  (function sort(n){n.kids.sort((a,b)=>((a._o||0)-(b._o||0))||(a.id<b.id?-1:a.id>b.id?1:0));
     n.kids.forEach(k=>{delete k._p;delete k._o;sort(k)})})(root);
   return root;
 }
@@ -842,19 +907,29 @@ function mergeTrees(mine,theirs){
   const tg=theirs.gone||{};
   for(const k in tg)gone[k]=Math.max(gone[k]||0,tg[k]);
 
-  const keep={},stat={fromMine:0,fromTheirs:0,deleted:0,reattached:0};
+  const keep={},pos={},stat={fromMine:0,fromTheirs:0,deleted:0,reattached:0,moved:0};
+  /* what a line says: the newest edit wins */
   const consider=(row,side)=>{
     const cur=keep[row.id];
     if(!cur||(row.touched||0)>(cur.touched||0)){keep[row.id]=row;
       if(side==='mine')stat.fromMine++;else stat.fromTheirs++}
   };
-  A.forEach(r=>consider(r,'mine'));
-  B.forEach(r=>consider(r,'theirs'));
+  /* where a line is: the newest move wins, separately */
+  const place=(row,side)=>{
+    const cur=pos[row.id];
+    if(!cur){pos[row.id]=row;return}
+    if((row.mv||0)>(cur.mv||0)){
+      if(side==='theirs'&&(row._p!==cur._p||row._o!==cur._o))stat.moved++;
+      pos[row.id]=row}
+  };
+  A.forEach(r=>{consider(r,'mine');place(r,'mine')});
+  B.forEach(r=>{consider(r,'theirs');place(r,'theirs')});
 
   const rows=[];
   for(const id in keep){
-    const r=keep[id];
-    if(gone[id]&&gone[id]>=(r.touched||0)){stat.deleted++;continue}
+    const p=pos[id];
+    const r=Object.assign({},keep[id],{_p:p._p,_o:p._o,ord:p.ord,mv:p.mv});
+    if(gone[id]&&gone[id]>=Math.max(r.touched||0,r.mv||0)){stat.deleted++;continue}
     rows.push(r);
   }
   const alive={};rows.forEach(r=>alive[r.id]=1);
@@ -906,7 +981,7 @@ function syncNow(){
     if(remote&&remote.tree&&remote.tree.kids){
       stamp(false);                 /* clock anything typed since the last save, before comparing */
       const out=mergeTrees({tree:ROOT,gone:GONE},{tree:sane(remote.tree)||{id:ROOT.id,kids:[]},gone:remote.gone||{}});
-      if(out.stat.fromTheirs||out.stat.deleted||out.stat.reattached){
+      if(out.stat.fromTheirs||out.stat.deleted||out.stat.reattached||out.stat.moved){
         replaceRoot(out.tree);
         for(const k in GONE)delete GONE[k]; Object.assign(GONE,out.gone);
         try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
@@ -922,6 +997,8 @@ function syncNow(){
         if(f&&f.node&&!f.node.done){delete TALLY[id];tn++}}
       if(tn)tallySave();
     }
+    /* the first pull has landed: now this device may fix its stored order */
+    if(!posReady){posReady=true;if(normalizeOrds()){stamp(false);changed=true}}
     return rpc('yodo_put',{p_code:SY.code,p_data:syPayload()}).then(()=>{
       SY.last=Date.now();sySave();syBusy=false;
       if(changed){save();renderKeepingCaret()}
@@ -1004,6 +1081,8 @@ document.getElementById('undo-b').onclick=()=>{
 
 /* ---------- render ---------- */
 function render(){
+  tidyTree();
+  rollRepeats();
   document.getElementById('tree').style.display   = mode==='map'?'':'none';
   document.getElementById('dolist').style.display = mode==='do' ?'':'none';
   document.getElementById('fold').style.visibility = mode==='map'?'':'hidden';
@@ -1050,7 +1129,7 @@ function rowEl(node,parent,depth){
   wrap.className='d'+Math.min(depth,4)+(has?' holds':'')+(isDone(node)?' done':'')+
     ((node.note||openId===node.id)?' hasnote':'');
 
-  const lab=label(node.when);
+  const lab=isDone(node)?null:label(node.when);
   const r=document.createElement('div');
   r.className='row'+(lab?' '+lab.cls:'');
 
@@ -1093,7 +1172,8 @@ function rowEl(node,parent,depth){
       (node.urgent?'<span class="mk urg">\u23F1\uFE0E</span>':'')+
       (node.imp?'<span class="mk imp">Imp</span>':'')+'</span>');
   }
-  if(lab)marks.push(`<span class="mk ${lab.cls}">${node.repeat?'\u21BB ':''}${esc(lab.txt)}</span>`);
+  if(node.repeat&&isDone(node))marks.push(`<span class="mk rep">next ${esc(label(nextRound(node)).txt)}</span>`);
+  else if(lab)marks.push(`<span class="mk ${lab.cls}">${node.repeat?'\u21BB ':''}${esc(lab.txt)}</span>`);
   else if(node.repeat)marks.push(`<span class="mk rep">${esc(
     node.repeat==='weekly'&&node.rDay!=null?WD[node.rDay]
     :node.repeat==='monthly'&&node.rDate!=null?('the '+node.rDate)
@@ -1185,9 +1265,9 @@ function ctlEl(node,parent,depth){
   host=l2;
   const lab2=label(node.when);
   mk('\u23F1\uFE0E', node.urgent?'set urg':'sym',
-     ()=>{node.urgent=!node.urgent;touch(node);render();if(node.urgent)nudgeCue(node)}, 'Urgent');
+     ()=>{node.urgent=!node.urgent;unpinIfBare(node);touch(node);render();if(node.urgent)nudgeCue(node)}, 'Urgent');
   mk('Imp',     node.imp?'set':'sym',
-     ()=>{node.imp=!node.imp;touch(node);render();if(node.imp)nudgeCue(node)}, 'Important');
+     ()=>{node.imp=!node.imp;unpinIfBare(node);touch(node);render();if(node.imp)nudgeCue(node)}, 'Important');
   mk('<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>', node.when!=null?('set'+(lab2.cls==='late'?' late':'')):'sym',
      ()=>datePick(node), 'When');
   mk('&#8635;', node.repeat?'set':'sym', ()=>repeatPick(node), 'Repeats');
@@ -1214,12 +1294,13 @@ function placeOrd(parent,node,snap){
   const pv=parent.kids[j-1], nx=parent.kids[j+1];
   const a=pv?(snap[pv.id]!=null?snap[pv.id]:(pv.ord!=null?pv.ord:0)):null;
   const b=nx?(snap[nx.id]!=null?snap[nx.id]:(nx.ord!=null?nx.ord:0)):null;
+  const now=Date.now();
   if(a!=null&&b!=null){
-    if(b-a>1){node.ord=(a+b)/2;touch(node)}
-    else{parent.kids.forEach((k,i)=>{k.ord=i*100;touch(k)})}
-  }else if(a!=null){node.ord=a+100;touch(node)}
-  else if(b!=null){node.ord=b-100;touch(node)}
-  else{node.ord=0;touch(node)}
+    if(b-a>1e-6){node.ord=(a+b)/2;node.mv=now}
+    else{parent.kids.forEach((k,i)=>{k.ord=i*1024;k.mv=now})}    /* moves only: no text is overruled */
+  }else if(a!=null){node.ord=a+1024;node.mv=now}
+  else if(b!=null){node.ord=b-1024;node.mv=now}
+  else{node.ord=0;node.mv=now}
 }
 function shift(node,parent,d){
   const i=parent.kids.indexOf(node),j=i+d;
@@ -1314,33 +1395,89 @@ function ancestry(id){
 }
 /* anything you have marked in any way is fair game for Do.
    most things never get a date; that must not exclude them. */
-function pickedUp(){
-  const out=[];
-  (function walk(x){
+/* What Do shows. A marked line without parts shows as itself. A marked line
+   WITH parts shows as its next step: the first part still open, carrying the
+   parent's day and flags, so a project marked "important, Friday" is never
+   silently left out. When the next step is marked itself, the two merge into
+   one entry carrying both. EFF holds the merged view; E(n) reads it. */
+let EFF=new Map(), PATH=new Map();
+const E=n=>EFF.get(n)||n;
+function doPool(){
+  EFF=new Map();PATH=new Map();const out=[];
+  (function walk(x,path){
     x.kids.forEach(k=>{
-      const picked=(k.when!=null||k.urgent||k.imp||k.star);
-      if(!k.kids.length&&picked&&(!isDone(k)||keepDone))out.push(k);
-      if(!isDone(k))walk(k);
+      if(!k.kids.length){
+        if((marked(k)||EFF.has(k))&&(!isDone(k)||keepDone)){out.push(k);PATH.set(k,path)}
+        return;
+      }
+      if(isDone(k))return;
+      if(marked(k)){const st=firstOpenLeaf(k);
+        if(st){const e=EFF.get(st)||{via:[]};e.via.push(k);EFF.set(st,e)}}
+      walk(k,path.concat(k.id));
     });
-  })(ROOT);
+  })(ROOT,[ROOT.id]);
+  EFF.forEach((e,leaf)=>{
+    const ws=[leaf.when].concat(e.via.map(v=>v.when)).filter(w=>w!=null);
+    e.when=ws.length?Math.min.apply(null,ws):null;
+    e.urgent=!!(leaf.urgent||e.via.some(v=>v.urgent));
+    e.imp=!!(leaf.imp||e.via.some(v=>v.imp));
+    e.star=!!leaf.star;
+  });
   return out;
 }
+function pickedUp(from){
+  const all=doPool();
+  if(!from||from===ROOT)return all;
+  return all.filter(n=>(PATH.get(n)||[]).includes(from.id));
+}
+/* the branches worth offering: any line with parts that holds something Do would show */
+function scopeChoices(){
+  const out=[];
+  (function w(x,d){x.kids.forEach(k=>{
+    if(!k.kids.length||isDone(k))return;
+    const n=pickedUp(k).filter(z=>!isDone(z)).length;
+    if(n){out.push({node:k,depth:d,n});if(d<3)w(k,d+1)}
+  })})(ROOT,0);
+  return out;
+}
+function scopePick(){
+  sin.innerHTML=sheetHead('Show in Do');
+  const list=document.createElement('div');list.className='scopelist';
+  const add=(label,n,depth,id)=>{
+    const b=document.createElement('button');b.className='scopeopt'+(doScope===id?' on':'');
+    b.style.paddingLeft=(14+depth*20)+'px';
+    b.setAttribute('aria-pressed',doScope===id);
+    const t=document.createElement('span');t.className='st';t.textContent=label;
+    const c=document.createElement('span');c.className='sn';c.textContent=n;
+    b.append(t,c);
+    b.onclick=ev=>{ev.stopPropagation();doScope=id;shutSheet();save();render()};
+    list.appendChild(b)};
+  add('Everything',pickedUp().filter(z=>!isDone(z)).length,0,null);
+  scopeChoices().forEach(c=>add(c.node.t||'(untitled)',c.n,c.depth+1,c.node.id));
+  sin.appendChild(list);
+  sin.insertAdjacentHTML('beforeend','<div class="hint">Only lines with parts are listed. '+
+    'The number is what is still waiting in each.</div>');
+  sheet.classList.add('on');
+}
 const BY_TIME=[
-  ['late', 'overdue',   n=>n.when!=null&&dayOff(n.when)<0],
-  ['now',  'today',     n=>n.when!=null&&dayOff(n.when)===0],
-  ['tom',  'tomorrow',  n=>n.when!=null&&dayOff(n.when)===1],
-  ['week', 'this week', n=>n.when!=null&&dayOff(n.when)>=2&&dayOff(n.when)<7],
-  ['later','later',     n=>n.when!=null&&dayOff(n.when)>=7],
-  ['none', 'no day yet, but marked', n=>n.when==null]
+  ['late', 'overdue',   n=>E(n).when!=null&&dayOff(E(n).when)<0],
+  ['now',  'today',     n=>E(n).when!=null&&dayOff(E(n).when)===0],
+  ['tom',  'tomorrow',  n=>E(n).when!=null&&dayOff(E(n).when)===1],
+  ['week', 'this week', n=>E(n).when!=null&&dayOff(E(n).when)>=2&&dayOff(E(n).when)<7],
+  ['later','later',     n=>E(n).when!=null&&dayOff(E(n).when)>=7],
+  ['none', 'no day yet, but marked', n=>E(n).when==null]
 ];
 /* two flags, four boxes. no scoring, no matrix diagram. */
 const BY_WEIGHT=[
-  ['late','urgent and important', n=>n.urgent&&n.imp],
-  ['now', 'urgent',               n=>n.urgent&&!n.imp],
-  ['week','important',            n=>!n.urgent&&n.imp],
-  ['later','just dated',          n=>!n.urgent&&!n.imp]
+  ['late','urgent and important', n=>E(n).urgent&&E(n).imp],
+  ['now', 'urgent',               n=>E(n).urgent&&!E(n).imp],
+  ['week','important',            n=>!E(n).urgent&&E(n).imp],
+  ['later','just dated',          n=>!E(n).urgent&&!E(n).imp]
 ];
 let doLens='time';   /* first run only; after that it remembers */
+let oneOffUntil=0;  /* the one-thing card is hidden until this moment (tomorrow) */
+let doScope=null;    /* null = everything. otherwise the id of the branch Do is narrowed to */
+const scopeNode=()=>{if(!doScope)return ROOT;const f=find(doScope);if(f)return f.node;doScope=null;return ROOT};
 var shut={};         /* which bands you have folded away */
 var keepDone=true;   /* a finished line stays where it is */
 var cheer=true;      /* and gets a word for it */
@@ -1369,21 +1506,17 @@ function cheerUp(){
 function finish(node){
   /* a repeating line is never "done": finishing it sends it to its next day,
      and the finish is counted under its own key so every round counts once */
-  if(node.repeat&&!node.kids.length&&!node.done){
-    const prevWhen=node.when,prevPin=node.pinned;
-    const base=Math.max(dayStart(Date.now()),node.when!=null?dayStart(node.when):0);
-    node.when=nextOcc(node,base);node.pinned=false;node.lastDone=Date.now();touch(node);
-    const key=node.id+'@'+Date.now();TALLY[key]=Date.now();tallySave();
-    buzz(14);cheerUp();save();
-    offerUndo('Done \u2014 back '+longDay(node.when)+'.',()=>{
-      node.when=prevWhen;node.pinned=prevPin;delete TALLY[key];tallySave();touch(node)});
-    return;
-  }
-  const kidsAllDone=node.kids.length&&(()=>{const st=stats(node);
-    return st.total&&st.done===st.total})();
-  if(kidsAllDone){
-    toastLine(node.done?'Still done \u2014 all its parts are finished. Untick a part to reopen it.'
-      :'Done because all its parts are. Untick a part to reopen it.');
+  if(node.kids.length){
+    /* a parent has no tick of its own. it is done when its parts are */
+    if(isDone(node)){toastLine('Done because all its parts are. Untick a part to reopen it.');return}
+    const open=[];(function w(x){x.kids.forEach(k=>{if(k.kids.length)w(k);else if(!k.done)open.push(k)})})(node);
+    offerUndo(open.length+' part'+(open.length>1?'s':'')+' still open.','Tick all '+open.length,()=>{
+      const now=Date.now();
+      open.forEach(k=>{k.done=true;k.doneAt=now;k.pinned=false;tallyMark(k);touch(k)});
+      buzz(14);cheerUp();save();render();
+      setTimeout(()=>offerUndo('Ticked '+open.length+' part'+(open.length>1?'s':'')+'.',()=>{
+        open.forEach(k=>{k.done=false;delete k.doneAt;tallyUnmark(k);touch(k)})}),60);
+    });
     return;
   }
   node.done=!node.done;touch(node);
@@ -1391,8 +1524,10 @@ function finish(node){
   else{delete node.doneAt;tallyUnmark(node)}
   if(node.done){
     buzz(14);cheerUp();
+    if(node.repeat&&!node.kids.length)
+      toastLine('Done. The next one comes round '+longDay(nextRound(node))+'.');
     /* if it left the screen, it needs a way back — in either mode. */
-    if(!keepDone&&fullyDone(node))
+    else if(!keepDone&&fullyDone(node))
       offerUndo('Taken off the list.','Bring it back',()=>{node.done=false;touch(node);save();render()});
   }
   save();
@@ -1400,24 +1535,28 @@ function finish(node){
 
 /* if you only do one thing. the rule is fixed and it says what it is. */
 function theOne(pool){
-  const late=n=>n.when!=null&&dayOff(n.when)<0;
-  const today=n=>n.when!=null&&dayOff(n.when)===0;
+  const late=n=>E(n).when!=null&&dayOff(E(n).when)<0;
+  const today=n=>E(n).when!=null&&dayOff(E(n).when)===0;
   const chosen=pool.find(n=>n.pinned);
   if(chosen)return {node:chosen,why:'you chose it'};
+  const U=n=>E(n).urgent, I=n=>E(n).imp;
   const rules=[
-    [n=>late(n)&&n.urgent&&n.imp, 'it is overdue, urgent and important'],
-    [n=>late(n)&&n.imp,           'it is overdue, and it matters'],
-    [n=>late(n),                  'it is already late'],
-    [n=>n.urgent&&n.imp,          'it is both urgent and important'],
-    [n=>today(n)&&n.imp,          'it is due today, and it matters'],
-    [n=>today(n),                 'it is due today'],
-    [n=>n.urgent,                 'you marked it urgent'],
-    [n=>n.imp,                    'you marked it important'],
-    [n=>n.when!=null,             'it has the nearest day on it']
+    [n=>late(n)&&U(n)&&I(n), 'it is overdue, urgent and important'],
+    [n=>late(n)&&I(n),       'it is overdue, and it matters'],
+    [n=>late(n),             'it is already late'],
+    [n=>U(n)&&I(n),          'it is both urgent and important'],
+    [n=>today(n)&&I(n),      'it is due today, and it matters'],
+    [n=>today(n),            'it is due today'],
+    [n=>U(n),                'it is marked urgent'],
+    [n=>I(n),                'it is marked important'],
+    [n=>E(n).when!=null,     'it has the nearest day on it']
   ];
+  /* say when the reason is really the parent's */
+  const viaWhy=(n,why)=>{const e=EFF.get(n);
+    return e&&e.via.length?'it is the next step of \u201C'+short(e.via[0].t,30)+'\u201D, and '+why.replace(/^it /,'that '):why};
   for(const [test,why] of rules){
     const hit=pool.find(test);
-    if(hit)return {node:hit,why};
+    if(hit)return {node:hit,why:viaWhy(hit,why)};
   }
   return pool.length?{node:pool[0],
     why:pool.length===1?'it is the only thing waiting':'nothing else is asking louder'}:null;
@@ -1430,25 +1569,48 @@ function renderDo(){
 
   const L=document.getElementById('dolist');L.innerHTML='';
 
+  const bar=document.createElement('div');bar.className='dobar';
   const lens=document.createElement('div');lens.className='lens';
   [['time','by day'],['weight','by weight']].forEach(([k,name])=>{
     const b=document.createElement('button');b.textContent=name;
     b.className=doLens===k?'on':'';
     b.onclick=()=>{doLens=k;save();render()};lens.appendChild(b);
   });
-  L.appendChild(lens);
+  const S=scopeNode();
+  /* the narrowing is always on screen. nothing is hidden without saying so. */
+  const sc=document.createElement('button');sc.className='scope'+(S!==ROOT?' on':'');
+  sc.setAttribute('aria-label','Show in Do: '+(S===ROOT?'everything':S.t));
+  sc.innerHTML='<span class="sl">in</span><span class="sv"></span><span class="sc">\u25BE</span>';
+  sc.querySelector('.sv').textContent=S===ROOT?'Everything':(S.t||'(untitled)');
+  sc.onclick=scopePick;
+  bar.append(lens,sc);
+  L.appendChild(bar);
 
-  const pool=pickedUp().sort((a,b)=>(a.when||Infinity)-(b.when||Infinity));
+  const pool=pickedUp(S).sort((a,b)=>(E(a).when||Infinity)-(E(b).when||Infinity));
+  const outside=S===ROOT?0:pickedUp().filter(z=>!isDone(z)).length-pool.filter(z=>!isDone(z)).length;
 
-  const one=theOne(pool.filter(n=>!isDone(n)));
+  const hideOne=oneOffUntil>Date.now();
+  const one=hideOne?null:theOne(pool.filter(n=>!isDone(n)));
+  /* hidden, never silently gone: one quiet line says so and brings it back */
+  if(hideOne&&pool.some(n=>!isDone(n))){
+    const h=document.createElement('button');h.className='onehid';
+    h.innerHTML='<span>One thing hidden until tomorrow</span><b>Show</b>';
+    h.onclick=()=>{oneOffUntil=0;save();render()};
+    L.appendChild(h);
+  }
   if(one){
     const h=document.createElement('div');h.className='theone';
-    const anc=ancestry(one.node.id).map(a=>a.t).join('  \u203A  ');
+    const anc=ancFrom(one.node.id,S).map(a=>a.t).join('  \u203A  ');
     h.innerHTML='<div class="lead">If you only do one thing</div>'+
       (anc?'<div class="oanc">'+esc(anc)+'</div>':'')+
       '<div class="otitle">'+esc(one.node.t)+'</div>'+
       (one.node.note?'<div class="ocue">\u21B3\u00a0\u00a0'+esc(one.node.note)+'</div>':'')+
       '<div class="owhy">because '+esc(one.why)+'</div>';
+    const x=document.createElement('button');x.className='ohide';x.innerHTML='&#10005;';
+    x.setAttribute('aria-label','Hide this until tomorrow');x.title='Hide this until tomorrow';
+    x.onclick=()=>{oneOffUntil=dayStart(Date.now())+DAY;save();render();
+      offerUndo('Hidden until tomorrow.',()=>{oneOffUntil=0;save()})};
+    h.appendChild(x);
     const act=document.createElement('div');act.className='oact';
     const g=document.createElement('button');g.className='go big';g.textContent='Start it';
     g.onclick=()=>startFocus(one.node);
@@ -1468,10 +1630,12 @@ function renderDo(){
   if(!pool.length){
     const fin=tallyCounts(1)[0];
     L.insertAdjacentHTML('beforeend','<div class="ghost" style="opacity:.6;cursor:default">'+
-      '<span class="g"><i></i></span><span>'+(fin
-        ?'All clear. '+fin+' finished today.'
+      '<span class="g"><i></i></span><span>'+esc(S!==ROOT
+        ?'Nothing waiting in '+short(S.t)+'.'+(outside?' '+outside+' elsewhere.':'')
+        :fin?'All clear. '+fin+' finished today.'
         :'Nothing picked up yet. In Map, give something a day, or mark it urgent or important.')+
       '</span></div>');
+    if(S!==ROOT)L.appendChild(showAll());
     return;
   }
 
@@ -1485,23 +1649,37 @@ function renderDo(){
     const b=document.createElement('div');
     b.className='band'+(cls==='now'?' now':cls==='late'?' late':'')+(folded?' folded':'');
     b.innerHTML='<button class="bandbtn"><span class="fold">\u25BE</span>'+
-      '<h2>'+name+'</h2><span class="n">'+rows.length+'</span></button>';
+      '<h2>'+name+'</h2><span class="n">'+(rows.filter(n=>!isDone(n)).length||'')+'</span></button>';
     b.querySelector('.bandbtn').onclick=()=>{shut[cls]=!folded;save();render()};
     L.appendChild(b);
     if(!folded)rows.forEach(n=>L.appendChild(doItem(n)));
   });
 
+  if(S!==ROOT&&outside)L.appendChild(showAll(outside));
   const foot=document.createElement('div');foot.className='foot';
-  foot.textContent=pool.length+' picked up. Mark something urgent, important or dated in Map '+
-    'and it appears here.';
+  foot.textContent=pool.filter(n=>!isDone(n)).length+' waiting'+(S!==ROOT?' in '+short(S.t):'')+
+    '. Mark something urgent, important or dated in Map and it appears here.';
   L.appendChild(foot);
+}
+function showAll(n){
+  const b=document.createElement('button');b.className='cb showall';
+  b.textContent=n?'Show everything ('+n+' more elsewhere)':'Show everything';
+  b.onclick=()=>{doScope=null;save();render()};
+  return b;
+}
+/* a line's roots, starting below the branch Do is narrowed to */
+function ancFrom(id,S){
+  const a=ancestry(id);
+  if(!S||S===ROOT)return a;
+  const i=a.findIndex(x=>x.id===S.id);
+  return i<0?a:a.slice(i+1);
 }
 
 function doItem(node){
   const w=document.createElement('div');
   w.className='doit'+(isDone(node)?' done':'')+(node.lit?' lit':'');
 
-  const anc=ancestry(node.id);
+  const anc=ancFrom(node.id,scopeNode());
   if(anc.length){
     const r=document.createElement('div');r.className='roots';
     anc.forEach((a,i)=>{
@@ -1518,12 +1696,20 @@ function doItem(node){
   tick.className='tick';tick.innerHTML=TICK;tick.setAttribute('aria-label','finish');
   if(isDone(node)){tick.style.background='var(--acc)';tick.style.borderColor='var(--acc)';
     tick.querySelector('svg').style.strokeDashoffset='0'}
-  tick.onclick=()=>{finish(node);render()};
+  const via=(EFF.get(node)||{}).via||[];
+  tick.onclick=()=>{
+    const was=isDone(node);finish(node);
+    if(!was&&isDone(node)&&via.length){
+      const p=via[0],nx=firstOpenLeaf(p);
+      offerUndo(nx?'Next step: \u201C'+short(nx.t)+'\u201D':'That was the last part of \u201C'+short(p.t)+'\u201D.',
+        ()=>{if(isDone(node))finish(node)});
+    }
+    render()};
   const tx=document.createElement('div');tx.className='dotext';tx.textContent=node.t;
   line.append(tick,tx);
-  const fl=[];
-  if(node.urgent)fl.push('<span class="mk urg">\u23F1\uFE0E</span>');
-  if(node.imp)fl.push('<span class="mk imp">Imp</span>');
+  const fl=[];const ef=E(node);
+  if(ef.urgent)fl.push('<span class="mk urg">\u23F1\uFE0E</span>');
+  if(ef.imp)fl.push('<span class="mk imp">Imp</span>');
   if(node.star)fl.push('<span class="dostar">\u2605</span>');
   if(fl.length){const f=document.createElement('div');f.style.cssText='display:flex;gap:8px;align-items:center';
     f.innerHTML=fl.join('');line.appendChild(f)}
@@ -1533,8 +1719,12 @@ function doItem(node){
     nn.textContent='\u21B3\u00a0\u00a0'+node.note;w.appendChild(nn)}
 
   const meta=document.createElement('div');meta.className='dometa';
-  const lab=label(node.when);
-  if(lab){const d=document.createElement('span');d.className='dodate '+lab.cls;
+  const lab=isDone(node)?null:label(E(node).when);
+  if(via.length){const st=document.createElement('span');st.className='dostep';
+    st.textContent='next step';meta.appendChild(st)}
+  if(node.repeat&&isDone(node)){const d=document.createElement('span');d.className='dodate';
+    d.textContent='\u21BB next '+label(nextRound(node)).txt;meta.appendChild(d)}
+  else if(lab){const d=document.createElement('span');d.className='dodate '+lab.cls;
     d.textContent=(node.repeat?'\u21BB ':'')+lab.txt;meta.appendChild(d)}
   if(!isDone(node)){
     const go=document.createElement('button');go.className='go';go.textContent='Start';
@@ -1669,13 +1859,13 @@ function datePick(node){
     b.onclick=()=>{node.when=at(d);touch(node);sheet.classList.remove('on');render();nudgeCue(node)};
       o.appendChild(b)});
   if(node.when!=null){const c=document.createElement('button');c.className='opt clear';
-    c.textContent='No date';c.onclick=()=>{node.when=null;touch(node);sheet.classList.remove('on');render()};
+    c.textContent='No date';c.onclick=()=>{node.when=null;unpinIfBare(node);touch(node);sheet.classList.remove('on');render()};
     o.appendChild(c)}
   sin.appendChild(o);
   sin.insertAdjacentHTML('beforeend','<div class="lbl">or pick one</div>');
   const inp=document.createElement('input');inp.type='date';
   if(node.when)inp.value=ymd(node.when);
-  inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;touch(node);
+  inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;unpinIfBare(node);touch(node);
     sheet.classList.remove('on');render()};
   sin.appendChild(inp);sheet.classList.add('on');
 }
@@ -1722,6 +1912,44 @@ function nextOcc(node,from){
 }
 /* the first time it comes round, today included */
 const firstOcc=node=>nextOcc(node,dayStart(Date.now())-DAY/2);
+/* a ticked repeat comes back for the round after the later of: the day it was
+   due, and the day it was done. Finishing early covers that round; finishing
+   late does not make you owe the rounds you missed. */
+/* when a line was finished: for a checklist, when its last part was */
+function doneAtOf(n){
+  if(!n.kids.length)return n.doneAt||0;
+  let m=0;(function w(x){x.kids.forEach(k=>{if(k.kids.length)w(k);else m=Math.max(m,k.doneAt||0)})})(n);
+  return m;
+}
+function nextRound(node){
+  const d=doneAtOf(node);
+  const base=Math.max(d?dayStart(d):dayStart(Date.now()),node.when!=null?dayStart(node.when):0);
+  return nextOcc(node,base);
+}
+/* bring back every ticked repeat whose round is over. The finish stays in the
+   tally under a key of its own, so the next round counts afresh. Runs on every
+   render, so an app left open overnight is right in the morning. */
+function rollRepeats(){
+  let n=0;
+  (function w(x){x.kids.forEach(k=>{
+    if(k.repeat&&isDone(k)){
+      const d=doneAtOf(k);
+      const covered=Math.max(d?dayStart(d):0,k.when!=null?dayStart(k.when):0);
+      if(covered<dayStart(Date.now())){
+        const nxt=nextRound(k);
+        /* the line, or every part of a checklist, comes back unticked; the
+           finishes stay in the tally under keys of their own */
+        const reopen=x=>{if(x.kids.length){x.kids.forEach(reopen);return}
+          if(!x.done)return;
+          if(TALLY[x.id]!=null){TALLY[x.id+'@'+TALLY[x.id]]=TALLY[x.id];delete TALLY[x.id]}
+          x.done=false;delete x.doneAt;touch(x)};
+        reopen(k);k.when=nxt;touch(k);n++;
+      }
+    }
+    w(k)})})(ROOT);
+  if(n)tallySave();
+  return n;
+}
 function repeatPick(node){
   sin.innerHTML=sheetHead('Does it come back?');
   const o=document.createElement('div');o.className='opts';
@@ -1794,7 +2022,7 @@ document.getElementById('gear').onclick=()=>{
     [['Leave it in place, struck through',true],['Take it off the list',false]].forEach(([l,v])=>{
       const b=document.createElement('button');b.className='opt';b.textContent=l;
       b.setAttribute('aria-pressed',keepDone===v);
-      b.onclick=ev=>{ev.stopPropagation();keepDone=v;save();document.getElementById('gear').click()};
+      b.onclick=ev=>{ev.stopPropagation();keepDone=v;save();render();document.getElementById('gear').click()};
       o.appendChild(b)});
     sin.appendChild(o);
     const o2=document.createElement('div');o2.className='opts';o2.style.marginTop='7px';
@@ -1921,7 +2149,7 @@ document.getElementById('gear').onclick=()=>{
         /* "replace everything" has to win over the other devices too: lines not in
            the backup are marked deleted, lines in it are stamped as just written */
         const now=Date.now(),keep={};
-        (function w(n){n.kids.forEach(k=>{keep[k.id]=1;k.touched=now;w(k)})})(t);
+        (function w(n){n.kids.forEach(k=>{keep[k.id]=1;k.touched=now;k.mv=now;w(k)})})(t);
         (function w(n){n.kids.forEach(k=>{if(!keep[k.id])markGone(k.id);w(k)})})(ROOT);
         for(const id in keep)delete GONE[id];
         try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
@@ -1969,7 +2197,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 20</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 23</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
@@ -2144,8 +2372,31 @@ if(!seen&&!ROOT.kids.length)setTimeout(startIntro,250);
 (function(){let n=0;(function w(x){x.kids.forEach(k=>{
   if(k.done&&k.doneAt&&!k.kids.length&&TALLY[k.id]==null){TALLY[k.id]=k.doneAt;n++}
   w(k)})})(ROOT);if(n)tallySave()})();
+/* pins left on lines that were unmarked before alpha 22 */
+(function w(x){x.kids.forEach(k=>{unpinIfBare(k);w(k)})})(ROOT);
+/* alpha 20 pushed a repeat a round further on every tap, and counted every
+   tap. Undo both: a repeat it moved comes back to its first round after the
+   day it was last done, and duplicate counts for the same line and day go. */
+(function(){
+  let fixed=0;
+  (function w(x){x.kids.forEach(k=>{
+    if(k.repeat&&k.lastDone&&!k.kids.length){
+      const right=nextOcc(k,dayStart(k.lastDone));
+      if(k.when==null||k.when>right){k.when=right;fixed++}
+      delete k.lastDone;touch(k);
+    }
+    w(k)})})(ROOT);
+  const seen={};
+  Object.keys(TALLY).filter(key=>key.includes('@')).sort().forEach(key=>{
+    const day=dayStart(TALLY[key]),sig=key.split('@')[0]+'|'+day;
+    if(seen[sig])delete TALLY[key];else seen[sig]=1;
+  });
+  tallySave();
+})();
 /* repeats set before alpha 20 may have no day, which hid them from Do */
 (function w(x){x.kids.forEach(k=>{if(k.repeat&&!k.kids.length&&k.when==null){k.when=firstOcc(k);touch(k)}w(k)})})(ROOT);
+posReady=!syncOn();
+normalizeOrds();
 stamp(true);
 /* ask the browser not to clear this site's storage when space runs low */
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
