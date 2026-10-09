@@ -496,11 +496,17 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .opt.clear{color:var(--late)}
 input[type=date]{width:100%;margin-top:var(--s3);background:var(--hair);border:none;
   border-radius:var(--r2);padding:12px 14px;font:inherit;color:var(--ink);outline:none}
-.lbl{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+.lbl{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:var(--s4) 0 var(--s2)}
+.lbl.sub{font-weight:400;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
   margin:var(--s4) 0 var(--s2)}
+.binlist{display:flex;flex-direction:column;gap:6px}
+.binrow{display:flex;align-items:center;gap:10px;min-height:44px}
+.bint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(14px*var(--fs))}
+.binw{font-size:calc(12.5px*var(--fs));color:var(--faint);white-space:nowrap}
 .hint{font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.6;margin-top:var(--s2)}
 .foot{margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--hair);
   font-size:calc(12.5px*var(--fs));color:var(--faint);line-height:1.75}
+@media (max-width:640px), (pointer:coarse){.foot .kbline{display:none}}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--hair);
   padding:2px 5px;border-radius:5px}
 @media print{
@@ -532,7 +538,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
       <div class="icons">
         <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
         <button class="ico" id="tally" aria-label="What got finished" style="display:none">◨</button>
-        <button class="ico" id="gear" aria-label="Look">⚙</button>
+        <button class="ico" id="gear" aria-label="Settings">⚙</button>
       </div>
     </div>
     <div class="bar2" id="bar2">
@@ -543,12 +549,12 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
   <div id="tree"></div>
   <div id="dolist"></div>
   <div class="foot">
-    <kbd>Enter</kbd> new line · <kbd>Tab</kbd> tuck under · <kbd>⇧Tab</kbd> pull out ·
-    <kbd>⌫</kbd> on empty removes<br>
+    <span class="kbline"><kbd>Enter</kbd> new line · <kbd>Tab</kbd> tuck under · <kbd>⇧Tab</kbd> pull out ·
+    <kbd>⌫</kbd> on empty removes<br></span>
     Every line has a dot on the right. Tap it to step inside — that is how a to-do
     becomes a project.<br>
-    <span class="key">⏱</span> urgent · <span class="key">Imp</span> important ·
-    <span class="key">📅</span> a day · <span class="key">↻</span> repeats ·
+    <span class="key">⏱︎</span> urgent · <span class="key">Imp</span> important ·
+    <span class="key"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" style="vertical-align:-1px"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg></span> a day · <span class="key">↻</span> repeats ·
     <span class="key">⬤</span> colour<br>
     Swipe sideways to move between Map and Do.
   </div>
@@ -597,20 +603,82 @@ const ICO={
        '<path d="M7 7.6v9M3.8 13.4L7 17l3.2-3.6"/></svg>'
 };
 const DAY=864e5;
+/* Dates are stored as 6pm on the day. They must be COMPARED as calendar days:
+   comparing raw hours made today's lines "1d late" after 6pm, and tomorrow's
+   lines "today" late in the evening. Everything that asks "which day" goes
+   through dayOff. */
+const dayStart=ms=>{const x=new Date(ms);x.setHours(0,0,0,0);return x.getTime()};
+const dayOff=ms=>Math.round((dayStart(ms)-dayStart(Date.now()))/DAY);
+const ymd=ms=>{const x=new Date(ms);return x.getFullYear()+'-'+
+  String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const longDay=ms=>new Date(ms).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+/* anything a person typed, or another device sent, is text \u2014 never markup */
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const short=(t,n)=>{t=(t||'').trim()||'that line';return t.length>(n||40)?t.slice(0,(n||40)-1)+'\u2026':t};
 /* one short pulse when a thing is finished. silent if the device cannot. */
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms||12)}catch(e){}}
 let uid=0;const SALT=Math.random().toString(36).slice(2,6)+Date.now().toString(36).slice(-3);
 const nid=()=>'n'+(++uid)+'.'+SALT;
-const at=d=>{const x=new Date();x.setDate(x.getDate()+d);x.setHours(18,0,0,0);return x.getTime()};
+const at=d=>{const x=new Date(Date.now());x.setDate(x.getDate()+d);x.setHours(18,0,0,0);return x.getTime()};
 const nd=(t,kids,x)=>Object.assign({id:nid(),t,kids:kids||[],done:false,collapsed:true,touched:Date.now()},x||{});
 const touch=n=>{n.touched=Date.now()};
 
 const ROOT=nd('Everything',[]);
 
+/* Data from storage, a backup file or another device is checked before it is
+   trusted. A malformed line is repaired if it can be, dropped if it cannot. */
+const REPEATS=['daily','weekly','monthly'], HUE_KEYS=['terracotta','ink','moss','plum','rose','ochre'];
+function sane(n,depth,seen){
+  seen=seen||{};depth=depth||0;
+  if(!n||typeof n!=='object'||typeof n.id!=='string'||!n.id||seen[n.id]||depth>400)return null;
+  seen[n.id]=1;
+  n.t=typeof n.t==='string'?n.t:String(n.t==null?'':n.t);
+  if(n.note!=null&&typeof n.note!=='string')n.note=String(n.note);
+  if(n.when!=null&&!Number.isFinite(n.when))n.when=null;
+  if(n.repeat!=null&&!REPEATS.includes(n.repeat))n.repeat=null;
+  if(n.rDay!=null&&!(Number.isInteger(n.rDay)&&n.rDay>=0&&n.rDay<=6))n.rDay=null;
+  if(n.rDate!=null&&!(Number.isInteger(n.rDate)&&n.rDate>=1&&n.rDate<=31))n.rDate=null;
+  if(n.hue!=null&&!HUE_KEYS.includes(n.hue))n.hue=null;
+  if(n.touched!=null&&!Number.isFinite(n.touched))n.touched=0;
+  n.done=!!n.done;
+  n.kids=Array.isArray(n.kids)?n.kids.map(k=>sane(k,depth+1,seen)).filter(Boolean):[];
+  return n;
+}
+
 /* ---------- it has to survive a reload ---------- */
 var askCue=false;
 const KEY='yodo.v1';
+let TALLY=(function(){try{return JSON.parse(localStorage.getItem('yodo.tally')||'{}')}catch(e){return{}}})();
+function tallySave(){try{localStorage.setItem('yodo.tally',JSON.stringify(TALLY))}catch(e){}}
+function tallyMark(node){if(!node.kids.length){TALLY[node.id]=node.doneAt||Date.now();tallySave()}}
+function tallyUnmark(node){if(TALLY[node.id]!=null){delete TALLY[node.id];tallySave()}}
+/* THE FUNNEL. Every change reaches storage through save(), so save() is where
+   a change is noticed: any line whose own content differs from what was last
+   saved gets a fresh clock, even if the code that changed it forgot to say so.
+   A change without a clock loses every merge, which is how alpha 15 found that
+   no line had ever been stamped. This makes that class of bug impossible. */
+let SIG={};
+const sigOf=(n,pid)=>JSON.stringify([pid,n.t,n.note,n.done,n.when,n.urgent,n.imp,n.star,
+  n.repeat,n.rDay,n.rDate,n.hue,n.pinned,n.lit,n.ord,n.doneAt]);
+function stamp(seedOnly){
+  const now=Date.now(),next={};
+  (function walk(x){x.kids.forEach(k=>{
+    const sg=sigOf(k,x.id);
+    if(!seedOnly&&SIG[k.id]!==undefined&&SIG[k.id]!==sg)k.touched=Math.max(k.touched||0,now);
+    next[k.id]=sg;walk(k)})})(ROOT);
+  SIG=next;
+}
+/* the only way the whole tree is swapped: a merge, a restore, an undo of either.
+   Afterwards nothing may still hold the old objects. */
+function replaceRoot(tree){
+  for(const k in ROOT)delete ROOT[k];
+  Object.assign(ROOT,tree);
+  stamp(true);
+  if(!find(zoom)){zoom=ROOT.id;openId=null}
+  if(typeof fNode!=='undefined'&&fNode){const f=find(fNode.id);fNode=f?f.node:null}
+}
 function save(){
+  stamp(false);
   try{localStorage.setItem(KEY,JSON.stringify(
     {tree:ROOT,zoom,mode,uid,doLens,askCue,shut,keepDone,cheer,
      theme:document.body.dataset.theme,
@@ -624,7 +692,7 @@ function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,250)}
 function load(){
   try{
     const raw=localStorage.getItem(KEY); if(!raw)return false;
-    const d=JSON.parse(raw); if(!d||!d.tree)return false;
+    const d=JSON.parse(raw); if(!d||!d.tree||!sane(d.tree))return false;
     Object.assign(ROOT,d.tree);
     uid=d.uid||uid;
     if(d.theme)document.body.dataset.theme=d.theme;
@@ -670,8 +738,8 @@ function fullyDone(n){
 
 function label(ms){
   if(ms==null)return null;
-  const diff=ms-Date.now(),d=Math.floor(diff/DAY);
-  if(diff<0) return{txt:Math.ceil(-diff/DAY)+'d late',cls:'late'};
+  const d=dayOff(ms);
+  if(d<0)    return{txt:(-d)+'d late',cls:'late'};
   if(d===0)  return{txt:'today',cls:'today'};
   if(d===1)  return{txt:'tomorrow',cls:''};
   if(d<7)    return{txt:new Date(ms).toLocaleDateString(undefined,{weekday:'short'}),cls:''};
@@ -703,6 +771,36 @@ function markGone(id){
   for(const k in GONE)if(GONE[k]<cut)delete GONE[k];
   try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
 }
+/* RECENTLY DELETED. A deleted line keeps its words for 30 days on this device,
+   so "undo" is not the only way back. Restoring stamps every line afresh, which
+   is what lets a restore beat the deletion on a device that already synced it. */
+let BIN=(function(){try{const b=JSON.parse(localStorage.getItem('yodo.bin')||'[]');return Array.isArray(b)?b:[]}catch(e){return[]}})();
+function binSave(){const cut=Date.now()-30*DAY;BIN=BIN.filter(b=>b&&b.at>cut&&b.node).slice(0,60);
+  try{localStorage.setItem('yodo.bin',JSON.stringify(BIN))}catch(e){}}
+function removeLine(node,parent){
+  if(chain(zoom).some(a=>a.id===node.id))zoom=parent.id;      /* walk out first */
+  const trivial=!(node.t||'').trim()&&!node.kids.length&&!node.note;
+  const copy=trivial?null:JSON.parse(JSON.stringify(node));
+  const i=killNode(node,parent);if(i<0)return null;
+  if(!copy)return null;
+  const e={key:node.id+'@'+Date.now(),at:Date.now(),parentId:parent.id,idx:i,node:copy};
+  BIN.unshift(e);binSave();return e;
+}
+function restoreLine(key){
+  const k=BIN.findIndex(b=>b.key===key);if(k<0)return null;
+  const e=BIN[k];BIN.splice(k,1);binSave();
+  const there=find(e.node.id);if(there)return there.node;
+  const node=sane(e.node);if(!node)return null;
+  const f=find(e.parentId),parent=f?f.node:ROOT;
+  const snap=ordSnap(parent);
+  parent.kids.splice(Math.min(e.idx,parent.kids.length),0,node);placeOrd(parent,node,snap);
+  /* stamped LAST, strictly after the deletion: placeOrd's own stamp must not undercut it */
+  const now=Date.now();
+  (function un(n){n.touched=Math.max(now,(GONE[n.id]||0)+1);delete GONE[n.id];n.kids.forEach(un)})(node);
+  try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(err){}
+  return node;
+}
+function countIn(n){let c=0;(function w(x){x.kids.forEach(k=>{c++;w(k)})})(n);return c}
 function killNode(node,parent){
   const i=parent.kids.indexOf(node);
   if(i<0)return -1;
@@ -786,7 +884,7 @@ function syCodeNew(){
   for(let i=0;i<20;i++){c+=a[r[i]%a.length];if(i%5===4&&i<19)c+='-'}
   return c;
 }
-function syPayload(){return {tree:ROOT,uid,gone:GONE,device:DEVICE,
+function syPayload(){return {tree:ROOT,uid,gone:GONE,device:DEVICE,tally:TALLY,
   saved:new Date().toISOString(),v:2}}
 function rpc(name,body){
   const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
@@ -806,25 +904,52 @@ function syncNow(){
   return rpc('yodo_get',{p_code:SY.code}).then(remote=>{
     let changed=false;
     if(remote&&remote.tree&&remote.tree.kids){
-      const out=mergeTrees({tree:ROOT,gone:GONE},{tree:remote.tree,gone:remote.gone||{}});
+      stamp(false);                 /* clock anything typed since the last save, before comparing */
+      const out=mergeTrees({tree:ROOT,gone:GONE},{tree:sane(remote.tree)||{id:ROOT.id,kids:[]},gone:remote.gone||{}});
       if(out.stat.fromTheirs||out.stat.deleted||out.stat.reattached){
-        for(const k in ROOT)delete ROOT[k]; Object.assign(ROOT,out.tree);
+        replaceRoot(out.tree);
         for(const k in GONE)delete GONE[k]; Object.assign(GONE,out.gone);
         try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
         if(remote.uid&&remote.uid>uid)uid=remote.uid;
-        if(!find(zoom)){zoom=ROOT.id;openId=null}
         changed=true;
       }
     }
+    if(remote&&remote.tally){
+      let tn=0;for(const id in remote.tally){
+        if(TALLY[id]==null){TALLY[id]=remote.tally[id];tn++}}
+      /* an untick anywhere wins over the union: a live, unfinished line is not finished */
+      for(const id in TALLY){const f=find(id);
+        if(f&&f.node&&!f.node.done){delete TALLY[id];tn++}}
+      if(tn)tallySave();
+    }
     return rpc('yodo_put',{p_code:SY.code,p_data:syPayload()}).then(()=>{
       SY.last=Date.now();sySave();syBusy=false;
-      if(changed){save();
-        /* never yank the caret out from under someone mid-word */
-        if(!(document.activeElement&&document.activeElement.isContentEditable))render();
-      }
+      if(changed){save();renderKeepingCaret()}
       return changed?'merged':'pushed';
     });
   }).catch(e=>{syBusy=false;SY.err=String(e&&e.message||e);sySave();return 'error'});
+}
+/* After the tree is swapped, every handler on screen points at the OLD lines, so
+   anything typed into them would vanish. Re-render, then put the caret back
+   exactly where it was: the person typing never notices. */
+function renderKeepingCaret(){
+  const a=document.activeElement;let id=null,kind=null,off=0;
+  if(a&&a.isContentEditable&&(a.dataset.id||a.dataset.note)){
+    kind=a.dataset.id?'t':'note';id=a.dataset.id||a.dataset.note;
+    /* offset as characters of text: a raw offset can count elements instead */
+    const sl=getSelection();
+    if(sl&&sl.rangeCount&&a.contains(sl.anchorNode)){const rg=sl.getRangeAt(0),pre=rg.cloneRange();
+      pre.selectNodeContents(a);pre.setEnd(rg.startContainer,rg.startOffset);off=pre.toString().length}
+    openId=id;
+  }
+  render();
+  if(!id)return;
+  const el=document.querySelector(kind==='t'?'.t[data-id="'+CSS.escape(id)+'"]':'.note[data-note="'+CSS.escape(id)+'"]');
+  if(!el)return;
+  el.contentEditable='true';el.focus();
+  const r=document.createRange(),tn=el.firstChild;
+  if(tn&&tn.nodeType===3)r.setStart(tn,Math.min(off,tn.length));else r.selectNodeContents(el);
+  r.collapse(true);const sl=getSelection();sl.removeAllRanges();sl.addRange(r);
 }
 function syncSoon(){if(!syncOn())return;clearTimeout(syT);syT=setTimeout(syncNow,4000)}
 window.__sync={syncNow:syncNow,soon:syncSoon,state:()=>SY,
@@ -965,14 +1090,14 @@ function rowEl(node,parent,depth){
   /* both flags together count as ONE mark, so a date can never be pushed off */
   if(node.urgent||node.imp){
     marks.push('<span class="flags">'+
-      (node.urgent?'<span class="mk urg">\u23F1</span>':'')+
+      (node.urgent?'<span class="mk urg">\u23F1\uFE0E</span>':'')+
       (node.imp?'<span class="mk imp">Imp</span>':'')+'</span>');
   }
-  if(lab)marks.push(`<span class="mk ${lab.cls}">${lab.txt}</span>`);
-  else if(node.repeat)marks.push(`<span class="mk rep">${
+  if(lab)marks.push(`<span class="mk ${lab.cls}">${node.repeat?'\u21BB ':''}${esc(lab.txt)}</span>`);
+  else if(node.repeat)marks.push(`<span class="mk rep">${esc(
     node.repeat==='weekly'&&node.rDay!=null?WD[node.rDay]
     :node.repeat==='monthly'&&node.rDate!=null?('the '+node.rDate)
-    :node.repeat}</span>`);
+    :node.repeat)}</span>`);
   m.innerHTML=marks.slice(0,2).join('');
 
   /* EVERY row gets a way in */
@@ -1045,13 +1170,9 @@ function ctlEl(node,parent,depth){
   [[ICO.out,'Out',()=>run('Tab',true)],[ICO.in,'In',()=>run('Tab',false)],['sp'],
    [ICO.up,'Up',()=>shift(node,parent,-1)],[ICO.down,'Down',()=>shift(node,parent,1)],['sp'],
    ['&#128465;','Delete',()=>{
-      const copy=node;
-      if(chain(zoom).some(a=>a.id===node.id))zoom=parent.id;   /* walk out first */
-      const i=killNode(node,parent);
+      const e=removeLine(node,parent);
       openId=null;render();
-      offerUndo('Deleted.',()=>{parent.kids.splice(i,0,copy);
-        (function un(n){delete GONE[n.id];n.kids.forEach(un)})(copy);
-        try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}})},'bin'],
+      if(e)offerUndo('Deleted \u201C'+short(node.t)+'\u201D.',()=>{restoreLine(e.key)})},'bin'],
    ]
    .forEach(([html,lbl,fn,cls])=>{
      if(html==='sp'){pad.appendChild(Object.assign(document.createElement('div'),{className:'sp'}));return}
@@ -1063,11 +1184,11 @@ function ctlEl(node,parent,depth){
   l1.appendChild(pad);
   host=l2;
   const lab2=label(node.when);
-  mk('&#9200;', node.urgent?'set urg':'sym',
+  mk('\u23F1\uFE0E', node.urgent?'set urg':'sym',
      ()=>{node.urgent=!node.urgent;touch(node);render();if(node.urgent)nudgeCue(node)}, 'Urgent');
   mk('Imp',     node.imp?'set':'sym',
      ()=>{node.imp=!node.imp;touch(node);render();if(node.imp)nudgeCue(node)}, 'Important');
-  mk('&#128197;', node.when!=null?('set'+(lab2.cls==='late'?' late':'')):'sym',
+  mk('<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>', node.when!=null?('set'+(lab2.cls==='late'?' late':'')):'sym',
      ()=>datePick(node), 'When');
   mk('&#8635;', node.repeat?'set':'sym', ()=>repeatPick(node), 'Repeats');
   mk(swatch(node), node.hue?'set':'sym', ()=>huePick(node), 'Colour');
@@ -1154,7 +1275,7 @@ function key(e,node,parent){
     }
   }
   if(e.key==='Backspace'&&!node.t&&!node.kids.length){e.preventDefault();
-    killNode(node,parent);openId=null;render();
+    removeLine(node,parent);openId=null;render();
     if(parent.kids[i-1])focus(parent.kids[i-1].id)}
 }
 function run(k,shift){
@@ -1205,11 +1326,11 @@ function pickedUp(){
   return out;
 }
 const BY_TIME=[
-  ['late', 'overdue',   n=>n.when!=null&&n.when-Date.now()<0],
-  ['now',  'today',     n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=0&&d<1}],
-  ['tom',  'tomorrow',  n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=1&&d<2}],
-  ['week', 'this week', n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=2&&d<7}],
-  ['later','later',     n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=7}],
+  ['late', 'overdue',   n=>n.when!=null&&dayOff(n.when)<0],
+  ['now',  'today',     n=>n.when!=null&&dayOff(n.when)===0],
+  ['tom',  'tomorrow',  n=>n.when!=null&&dayOff(n.when)===1],
+  ['week', 'this week', n=>n.when!=null&&dayOff(n.when)>=2&&dayOff(n.when)<7],
+  ['later','later',     n=>n.when!=null&&dayOff(n.when)>=7],
   ['none', 'no day yet, but marked', n=>n.when==null]
 ];
 /* two flags, four boxes. no scoring, no matrix diagram. */
@@ -1246,6 +1367,18 @@ function cheerUp(){
   clearTimeout(window._cT);window._cT=setTimeout(()=>e.classList.remove('on'),1500);
 }
 function finish(node){
+  /* a repeating line is never "done": finishing it sends it to its next day,
+     and the finish is counted under its own key so every round counts once */
+  if(node.repeat&&!node.kids.length&&!node.done){
+    const prevWhen=node.when,prevPin=node.pinned;
+    const base=Math.max(dayStart(Date.now()),node.when!=null?dayStart(node.when):0);
+    node.when=nextOcc(node,base);node.pinned=false;node.lastDone=Date.now();touch(node);
+    const key=node.id+'@'+Date.now();TALLY[key]=Date.now();tallySave();
+    buzz(14);cheerUp();save();
+    offerUndo('Done \u2014 back '+longDay(node.when)+'.',()=>{
+      node.when=prevWhen;node.pinned=prevPin;delete TALLY[key];tallySave();touch(node)});
+    return;
+  }
   const kidsAllDone=node.kids.length&&(()=>{const st=stats(node);
     return st.total&&st.done===st.total})();
   if(kidsAllDone){
@@ -1254,7 +1387,8 @@ function finish(node){
     return;
   }
   node.done=!node.done;touch(node);
-  if(node.done)node.doneAt=Date.now();else delete node.doneAt;
+  if(node.done){node.doneAt=Date.now();node.pinned=false;tallyMark(node)}
+  else{delete node.doneAt;tallyUnmark(node)}
   if(node.done){
     buzz(14);cheerUp();
     /* if it left the screen, it needs a way back — in either mode. */
@@ -1266,8 +1400,8 @@ function finish(node){
 
 /* if you only do one thing. the rule is fixed and it says what it is. */
 function theOne(pool){
-  const late=n=>n.when!=null&&n.when-Date.now()<0;
-  const today=n=>{const d=(n.when-Date.now())/DAY;return n.when!=null&&d>=0&&d<1};
+  const late=n=>n.when!=null&&dayOff(n.when)<0;
+  const today=n=>n.when!=null&&dayOff(n.when)===0;
   const chosen=pool.find(n=>n.pinned);
   if(chosen)return {node:chosen,why:'you chose it'};
   const rules=[
@@ -1311,15 +1445,15 @@ function renderDo(){
     const h=document.createElement('div');h.className='theone';
     const anc=ancestry(one.node.id).map(a=>a.t).join('  \u203A  ');
     h.innerHTML='<div class="lead">If you only do one thing</div>'+
-      (anc?'<div class="oanc">'+anc+'</div>':'')+
-      '<div class="otitle">'+one.node.t+'</div>'+
-      (one.node.note?'<div class="ocue">\u21B3\u00a0\u00a0'+one.node.note+'</div>':'')+
-      '<div class="owhy">because '+one.why+'</div>';
+      (anc?'<div class="oanc">'+esc(anc)+'</div>':'')+
+      '<div class="otitle">'+esc(one.node.t)+'</div>'+
+      (one.node.note?'<div class="ocue">\u21B3\u00a0\u00a0'+esc(one.node.note)+'</div>':'')+
+      '<div class="owhy">because '+esc(one.why)+'</div>';
     const act=document.createElement('div');act.className='oact';
     const g=document.createElement('button');g.className='go big';g.textContent='Start it';
     g.onclick=()=>startFocus(one.node);
     const d=document.createElement('button');d.className='cb';d.textContent='Finished it';
-    d.onclick=()=>{one.node.done=true;one.node.doneAt=Date.now();one.node.pinned=false;touch(one.node);render()};
+    d.onclick=()=>{finish(one.node);render()};
     act.append(g,d);
     if(one.node.pinned){
       const un=document.createElement('button');un.className='cb pin on';
@@ -1332,15 +1466,19 @@ function renderDo(){
   }
 
   if(!pool.length){
+    const fin=tallyCounts(1)[0];
     L.insertAdjacentHTML('beforeend','<div class="ghost" style="opacity:.6;cursor:default">'+
-      '<span class="g"><i></i></span><span>Nothing picked up yet. In Map, give something '+
-      'a day, or mark it urgent or important.</span></div>');
+      '<span class="g"><i></i></span><span>'+(fin
+        ?'All clear. '+fin+' finished today.'
+        :'Nothing picked up yet. In Map, give something a day, or mark it urgent or important.')+
+      '</span></div>');
     return;
   }
 
   let shown=0;
   (doLens==='time'?BY_TIME:BY_WEIGHT).forEach(([cls,name,test])=>{
-    const rows=pool.filter(test);
+    /* the one thing sits in its card; listing it again below is noise */
+    const rows=pool.filter(n=>!(one&&n===one.node)).filter(test);
     if(!rows.length)return;
     shown+=rows.length;
     const folded=!!shut[cls];
@@ -1354,7 +1492,7 @@ function renderDo(){
   });
 
   const foot=document.createElement('div');foot.className='foot';
-  foot.textContent=shown+' picked up. Mark something urgent, important or dated in Map '+
+  foot.textContent=pool.length+' picked up. Mark something urgent, important or dated in Map '+
     'and it appears here.';
   L.appendChild(foot);
 }
@@ -1384,7 +1522,7 @@ function doItem(node){
   const tx=document.createElement('div');tx.className='dotext';tx.textContent=node.t;
   line.append(tick,tx);
   const fl=[];
-  if(node.urgent)fl.push('<span class="mk urg">\u23F1</span>');
+  if(node.urgent)fl.push('<span class="mk urg">\u23F1\uFE0E</span>');
   if(node.imp)fl.push('<span class="mk imp">Imp</span>');
   if(node.star)fl.push('<span class="dostar">\u2605</span>');
   if(fl.length){const f=document.createElement('div');f.style.cssText='display:flex;gap:8px;align-items:center';
@@ -1397,7 +1535,7 @@ function doItem(node){
   const meta=document.createElement('div');meta.className='dometa';
   const lab=label(node.when);
   if(lab){const d=document.createElement('span');d.className='dodate '+lab.cls;
-    d.textContent=lab.txt;meta.appendChild(d)}
+    d.textContent=(node.repeat?'\u21BB ':'')+lab.txt;meta.appendChild(d)}
   if(!isDone(node)){
     const go=document.createElement('button');go.className='go';go.textContent='Start';
     go.onclick=()=>startFocus(node);meta.appendChild(go);
@@ -1466,18 +1604,19 @@ document.getElementById('f-pause').onclick=()=>{
   if(fRun){fEnd=Date.now()+fLeft*1000;wakeGrab()}else wakeDrop();
   paintFocus()};
 document.getElementById('f-quit').onclick=endFocus;
-document.getElementById('f-fin').onclick=()=>{if(fNode){fNode.done=true;fNode.doneAt=Date.now();touch(fNode);buzz(22)}endFocus()};
+document.getElementById('f-fin').onclick=()=>{
+  const f=fNode&&find(fNode.id);
+  if(f&&!f.node.done)finish(f.node);
+  endFocus()};
 
 /* ---------- the tally ---------- */
 function tallyCounts(days){
   const out=new Array(days).fill(0);
   const day0=new Date();day0.setHours(0,0,0,0);
-  (function walk(n){n.kids.forEach(k=>{
-    if(k.done&&k.doneAt&&!k.kids.length){   /* only leaves are counted (rule 2) */
-      const d=Math.floor((day0.getTime()+86400000-k.doneAt)/86400000);
-      if(d>=0&&d<days)out[days-1-d]++;
-    }
-    walk(k)})})(ROOT);
+  for(const id in TALLY){
+    const d=Math.floor((day0.getTime()+86400000-TALLY[id])/86400000);
+    if(d>=0&&d<days)out[days-1-d]++;
+  }
   return out;
 }
 document.getElementById('tally').onclick=()=>{
@@ -1498,8 +1637,7 @@ document.getElementById('tally').onclick=()=>{
     '<div class="lbl">Last two weeks</div>'+
     '<div style="display:flex;align-items:flex-end;gap:4px;padding:6px 0 2px">'+bars+'</div>'+
     '<div class="hint">This week <b>'+thisWeek+'</b> \u00b7 last week <b>'+lastWeek+'</b>. '+
-    'Only lines themselves count \u2014 a project is its parts. '+
-    'Counting starts from today; earlier ticks carry no date.</div>');
+    'A finished line still counts after it is deleted; unticking it does not.</div>');
   sheet.classList.add('on');
 };
 
@@ -1524,7 +1662,8 @@ sin.addEventListener('click',e=>{if(e.target.closest('[data-shut]'))shutSheet()}
 function datePick(node){
   sin.innerHTML=sheetHead('When will you do it?');
   const o=document.createElement('div');o.className='opts';
-  [['Today',0],['Tomorrow',1],['This weekend',(6-new Date().getDay()+7)%7||6],
+  const wd=new Date(Date.now()).getDay();
+  [['Today',0],['Tomorrow',1],['This weekend',(wd===6||wd===0)?0:6-wd],
    ['Next week',7],['In a month',30]].forEach(([l,d])=>{
     const b=document.createElement('button');b.className='opt';b.textContent=l;
     b.onclick=()=>{node.when=at(d);touch(node);sheet.classList.remove('on');render();nudgeCue(node)};
@@ -1535,7 +1674,7 @@ function datePick(node){
   sin.appendChild(o);
   sin.insertAdjacentHTML('beforeend','<div class="lbl">or pick one</div>');
   const inp=document.createElement('input');inp.type='date';
-  if(node.when)inp.value=new Date(node.when).toISOString().slice(0,10);
+  if(node.when)inp.value=ymd(node.when);
   inp.onchange=()=>{node.when=inp.value?new Date(inp.value+'T18:00:00').getTime():null;touch(node);
     sheet.classList.remove('on');render()};
   sin.appendChild(inp);sheet.classList.add('on');
@@ -1568,6 +1707,21 @@ function huePick(node){
   sin.appendChild(o);sheet.classList.add('on');
 }
 const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/* the next time a repeating line comes round, strictly after the day of `from` */
+function nextOcc(node,from){
+  const x=new Date(dayStart(from));
+  if(node.repeat==='weekly'&&node.rDay!=null){
+    do x.setDate(x.getDate()+1); while(x.getDay()!==node.rDay);
+  }else if(node.repeat==='monthly'&&node.rDate!=null){
+    let y=x.getFullYear(),m=x.getMonth();
+    const fit=(y,m)=>Math.min(node.rDate,new Date(y,m+1,0).getDate());  /* the 31st in Feb is the 28th */
+    if(x.getDate()>=fit(y,m)){m++;if(m>11){m=0;y++}}
+    x.setFullYear(y,m,fit(y,m));
+  }else x.setDate(x.getDate()+1);
+  x.setHours(18,0,0,0);return x.getTime();
+}
+/* the first time it comes round, today included */
+const firstOcc=node=>nextOcc(node,dayStart(Date.now())-DAY/2);
 function repeatPick(node){
   sin.innerHTML=sheetHead('Does it come back?');
   const o=document.createElement('div');o.className='opts';
@@ -1577,8 +1731,11 @@ function repeatPick(node){
     b.onclick=ev=>{ev.stopPropagation();
       if(node.repeat===r&&r==='daily'){sheet.classList.remove('on');render();return}
       node.repeat=r;touch(node);
-      if(r==='weekly'&&node.rDay==null)node.rDay=new Date().getDay();
-      if(r==='monthly'&&node.rDate==null)node.rDate=new Date().getDate();
+      const base=new Date(node.when!=null?node.when:Date.now());
+      if(r==='weekly'&&node.rDay==null)node.rDay=base.getDay();
+      if(r==='monthly'&&node.rDate==null)node.rDate=base.getDate();
+      /* a repeat with no day is a repeat nobody ever sees: Do only shows dated lines */
+      if(node.when==null)node.when=firstOcc(node);
       if(r==='daily'){sheet.classList.remove('on');render();return}
       repeatPick(node)};
     o.appendChild(b)});
@@ -1592,7 +1749,7 @@ function repeatPick(node){
     const w=document.createElement('div');w.className='opts';
     WD.forEach((d,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=d;
       b.setAttribute('aria-pressed',node.rDay===i);
-      b.onclick=ev=>{ev.stopPropagation();node.rDay=i;touch(node);
+      b.onclick=ev=>{ev.stopPropagation();node.rDay=i;node.when=firstOcc(node);touch(node);
         sheet.classList.remove('on');render()};w.appendChild(b)});
     sin.appendChild(w);
   }
@@ -1603,7 +1760,7 @@ function repeatPick(node){
     for(let i=1;i<=31;i++){const b=document.createElement('button');b.className='opt';
       b.style.padding='9px 0';b.style.minWidth='42px';b.textContent=i;
       b.setAttribute('aria-pressed',node.rDate===i);
-      b.onclick=ev=>{ev.stopPropagation();node.rDate=i;touch(node);
+      b.onclick=ev=>{ev.stopPropagation();node.rDate=i;node.when=firstOcc(node);touch(node);
         sheet.classList.remove('on');render()};w.appendChild(b)}
     sin.appendChild(w);
   }
@@ -1615,8 +1772,8 @@ sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('on')};
 document.getElementById('gear').onclick=()=>{
   sin.innerHTML=sheetHead('Settings');
   sin.insertAdjacentHTML('beforeend','<div class="lbl" style="margin-top:4px">Look</div>');
-  const row=(title,items,cur,fn)=>{
-    sin.insertAdjacentHTML('beforeend','<div class="lbl">'+title+'</div>');
+  const row=(title,items,cur,fn,top)=>{
+    sin.insertAdjacentHTML('beforeend','<div class="lbl'+(top?'':' sub')+'">'+title+'</div>');
     const o=document.createElement('div');o.className='opts';
     items.forEach(([l,v])=>{const b=document.createElement('button');b.className='opt';b.textContent=l;
       b.setAttribute('aria-pressed',String(cur())===String(v));
@@ -1627,17 +1784,11 @@ document.getElementById('gear').onclick=()=>{
   row('Text size',[['Small',.92],['Normal',1],['Large',1.12]],
     ()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs')||1),
     v=>document.documentElement.style.setProperty('--fs',v));
-  row('Focus length',[['15 min',900],['25 min',1500],['45 min',2700],['60 min',3600]],
-    ()=>F_LEN, v=>{F_LEN=+v});
   row('Typeface',[['Sans',"'Instrument Sans'"],['Serif',"'Newsreader'"]],
     ()=>getComputedStyle(document.documentElement).getPropertyValue('--ff').trim(),
     v=>{document.documentElement.style.setProperty('--ff',v);save()});
-  sin.insertAdjacentHTML('beforeend',
-    '<div style="font-size:12px;color:var(--faint);margin-top:8px;line-height:1.55">'+
-    '<b>Merge</b> folds another device\u2019s backup into this one \u2014 newest change '+
-    'per line wins, nothing is lost. <b>Restore</b> replaces everything. '+
-    'This device is <code>'+DEVICE+'</code>.</div>');
-
+  row('Focus length',[['15 min',900],['25 min',1500],['45 min',2700],['60 min',3600]],
+    ()=>F_LEN, v=>{F_LEN=+v}, true);
   sin.insertAdjacentHTML('beforeend','<div class="lbl">Finishing</div>');
   { const o=document.createElement('div');o.className='opts';
     [['Leave it in place, struck through',true],['Take it off the list',false]].forEach(([l,v])=>{
@@ -1718,8 +1869,8 @@ document.getElementById('gear').onclick=()=>{
     syBtn('Stop syncing here',()=>{window.__sync.clearCode();shutSheet();
       toastLine('This device is on its own again. Nothing was deleted anywhere.')});
     sin.appendChild(sy);
-    syNote('Code: <b style="font-family:monospace">'+SY.code+'</b>'+
-      (SY.err?' \u00b7 last try failed: '+SY.err
+    syNote('Code: <b style="font-family:monospace">'+esc(SY.code)+'</b>'+
+      (SY.err?' \u00b7 last try failed: '+esc(SY.err)
        :SY.last?' \u00b7 last synced '+new Date(SY.last).toLocaleTimeString():''));
   }
 
@@ -1727,10 +1878,10 @@ document.getElementById('gear').onclick=()=>{
   const io=document.createElement('div');io.className='opts';
   const mkio=(label,fn)=>{const b=document.createElement('button');b.className='opt';
     b.textContent=label;b.onclick=ev=>{ev.stopPropagation();fn()};io.appendChild(b)};
-  mkio('Back up (.json)',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.json',
-    JSON.stringify({tree:ROOT,uid,gone:GONE,device:DEVICE,
+  mkio('Back up (.json)',()=>dl('yodo-'+ymd(Date.now())+'.json',
+    JSON.stringify({tree:ROOT,uid,gone:GONE,device:DEVICE,tally:TALLY,
       saved:new Date().toISOString(),v:2},null,2),'application/json'));
-  mkio('As plain text',()=>dl('yodo-'+new Date().toISOString().slice(0,10)+'.txt',
+  mkio('As plain text',()=>dl('yodo-'+ymd(Date.now())+'.txt',
     asText(),'text/plain'));
   mkio('Copy outline',()=>{navigator.clipboard&&navigator.clipboard.writeText(asText())
     .then(()=>toastLine('Copied.'),()=>toastLine('Could not copy.'))});
@@ -1740,20 +1891,21 @@ document.getElementById('gear').onclick=()=>{
     f.onchange=()=>{const r=new FileReader();
       r.onload=()=>{try{
         const d=JSON.parse(r.result);
-        if(!d||!(d.tree&&d.tree.kids))throw 0;
+        if(!d||!(d.tree&&d.tree.kids)||!sane(d.tree))throw 0;
+        stamp(false);
         const before=JSON.parse(JSON.stringify(ROOT));
         const beforeGone=JSON.parse(JSON.stringify(GONE));
         const out=mergeTrees({tree:ROOT,gone:GONE},{tree:d.tree,gone:d.gone||{}});
-        for(const k in ROOT)delete ROOT[k];
-        Object.assign(ROOT,out.tree);
+        replaceRoot(out.tree);
         for(const k in GONE)delete GONE[k];
         Object.assign(GONE,out.gone);
         try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
         zoom=ROOT.id;openId=null;save();shutSheet();render();
         offerUndo('Merged \u00b7 '+out.stat.fromTheirs+' newer from the file, '+
           out.stat.deleted+' removed',
-          'Undo',()=>{for(const k in ROOT)delete ROOT[k];Object.assign(ROOT,before);
+          'Undo',()=>{replaceRoot(before);
             for(const k in GONE)delete GONE[k];Object.assign(GONE,beforeGone);
+            try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
             save();render()});
       }catch(e){toastLine('That file did not read.')}};
       r.readAsText(f.files[0])};
@@ -1763,15 +1915,53 @@ document.getElementById('gear').onclick=()=>{
     f.onchange=()=>{const r=new FileReader();
       r.onload=()=>{try{
         const d=JSON.parse(r.result);const t=d.tree||d;
-        if(!t||!t.kids)throw 0;
-        for(const k in ROOT)delete ROOT[k];
-        Object.assign(ROOT,t);uid=d.uid||uid;
+        if(!t||!t.kids||!sane(t))throw 0;
+        stamp(false);
+        const before=JSON.parse(JSON.stringify(ROOT)),beforeGone=JSON.parse(JSON.stringify(GONE));
+        /* "replace everything" has to win over the other devices too: lines not in
+           the backup are marked deleted, lines in it are stamped as just written */
+        const now=Date.now(),keep={};
+        (function w(n){n.kids.forEach(k=>{keep[k.id]=1;k.touched=now;w(k)})})(t);
+        (function w(n){n.kids.forEach(k=>{if(!keep[k.id])markGone(k.id);w(k)})})(ROOT);
+        for(const id in keep)delete GONE[id];
+        try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
+        replaceRoot(t);uid=Math.max(uid,d.uid||0);
         zoom=ROOT.id;openId=null;save();sheet.classList.remove('on');render();
-        toastLine('Restored.');
+        offerUndo('Restored from the backup.',()=>{
+          const n2=Date.now();
+          (function w(n){n.kids.forEach(k=>{k.touched=n2;w(k)})})(before);
+          replaceRoot(before);
+          for(const k in GONE)delete GONE[k];Object.assign(GONE,beforeGone);
+          try{localStorage.setItem('yodo.gone',JSON.stringify(GONE))}catch(e){}
+          save()});
       }catch(e){toastLine('That file did not read.')}};
       r.readAsText(f.files[0])};
     f.click()});
   sin.appendChild(io);
+  sin.insertAdjacentHTML('beforeend',
+    '<div class="hint"><b>Merge</b> folds another device\u2019s backup into this one \u2014 newest change '+
+    'per line wins, nothing is lost. <b>Restore</b> replaces everything. '+
+    'This device is <code>'+DEVICE+'</code>.</div>');
+
+  sin.insertAdjacentHTML('beforeend','<div class="lbl">Recently deleted</div>');
+  binSave();
+  if(!BIN.length)sin.insertAdjacentHTML('beforeend','<div class="hint">Nothing deleted in the last 30 days.</div>');
+  else{
+    const bl=document.createElement('div');bl.className='binlist';
+    BIN.slice(0,12).forEach(b=>{
+      const r=document.createElement('div');r.className='binrow';
+      const t=document.createElement('span');t.className='bint';
+      const n=countIn(b.node);
+      t.textContent=short(b.node.t,46)+(n?' (and '+n+' inside)':'');
+      const w=document.createElement('span');w.className='binw';
+      const days=-dayOff(b.at);w.textContent=days===0?'today':days===1?'yesterday':days+' days ago';
+      const go=document.createElement('button');go.className='opt';go.textContent='Restore';
+      go.onclick=ev=>{ev.stopPropagation();const nd2=restoreLine(b.key);shutSheet();render();
+        if(nd2)toastLine('Restored \u201C'+short(nd2.t)+'\u201D.')};
+      r.append(t,w,go);bl.appendChild(r)});
+    sin.appendChild(bl);
+    sin.insertAdjacentHTML('beforeend','<div class="hint">Kept on this device for 30 days.</div>');
+  }
 
   sin.insertAdjacentHTML('beforeend','<div class="lbl">First time</div>');
   const again=document.createElement('div');again.className='opts';
@@ -1779,7 +1969,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 14</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 20</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
@@ -1864,9 +2054,9 @@ const COACH=[
   {sel:'#modes', h:'Two ways to look',
    p:'<b>Map</b> is for thinking \u2014 nesting, moving, breaking things down. '+
      '<b>Do</b> is for finishing, and nothing else.'},
-  {sel:'#gear', h:'Paper, size, typeface',
-   p:'And the length of a focus session. This introduction lives here too, '+
-     'if you want it again.'}
+  {sel:'#gear', h:'Everything else lives here',
+   p:'Paper, text size, the focus length \u2014 and <b>sync between devices</b>, '+
+     '<b>backups</b>, and this introduction again, whenever you want it.'}
 ];
 let coachAt=0;
 function startCoach(){coachAt=0;document.getElementById('coach').classList.add('on');paintCoach()}
@@ -1951,6 +2141,14 @@ if(q==='new'){setTimeout(()=>{const g=document.querySelector('.ghost');if(g)g.cl
 let seen=false;
 try{seen=localStorage.getItem('yodo.seen')==='1'}catch(e){}
 if(!seen&&!ROOT.kids.length)setTimeout(startIntro,250);
+(function(){let n=0;(function w(x){x.kids.forEach(k=>{
+  if(k.done&&k.doneAt&&!k.kids.length&&TALLY[k.id]==null){TALLY[k.id]=k.doneAt;n++}
+  w(k)})})(ROOT);if(n)tallySave()})();
+/* repeats set before alpha 20 may have no day, which hid them from Do */
+(function w(x){x.kids.forEach(k=>{if(k.repeat&&!k.kids.length&&k.when==null){k.when=firstOcc(k);touch(k)}w(k)})})(ROOT);
+stamp(true);
+/* ask the browser not to clear this site's storage when space runs low */
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
 if(syncOn())setTimeout(syncNow,600);
 
 /* offline */
