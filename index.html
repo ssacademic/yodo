@@ -798,6 +798,25 @@ body:has(.sheet.on) #undo{bottom:auto;top:calc(env(safe-area-inset-top) + 12px)}
 .d1.holds,.d1.holds + .d1:not(.holds){margin-top:var(--s5);padding-top:var(--s4)}
 .d1:first-child{margin-top:0;padding-top:0}
 
+
+/* ---- How Yodo works: one quiet line that opens ---- */
+#howto{margin-top:var(--s6);padding-top:var(--s3);border-top:1px solid var(--hair);color:var(--dim);font-size:calc(13px*var(--fs));line-height:1.6}
+#howto summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;
+  font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--faint);width:fit-content}
+#howto summary::-webkit-details-marker{display:none}
+#howto summary::after{content:'';width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  transform:rotate(-45deg);transition:transform .2s var(--ease);margin-left:2px}
+#howto[open] summary::after{transform:rotate(45deg) translateY(-2px)}
+#howto summary:hover{color:var(--dim)}
+#howto .howbody{padding:var(--s1) 0 var(--s2);animation:arrive .28s var(--ease)}
+.howlist{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0 0 var(--s3)}
+.howlist li{padding-left:14px;position:relative}
+.howlist li::before{content:'';position:absolute;left:2px;top:.68em;width:4px;height:4px;border-radius:50%;background:var(--faint);opacity:.6}
+.howlist b{font-weight:600;color:var(--ink)}
+.howkeys{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;align-items:baseline;margin:0 0 var(--s3)}
+.howkeys kbd{font:inherit;font-size:.86em;padding:1px 6px;border-radius:5px;background:var(--hair);color:var(--ink);white-space:nowrap}
+.howmarks{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--faint)}
+.howmarks b{font-weight:500;color:var(--dim)} .howmarks .lg-urg{color:var(--late)} .howmarks .lg-imp{color:var(--imp)}
 </style>
 </head>
 <body data-theme="paper">
@@ -825,17 +844,8 @@ body:has(.sheet.on) #undo{bottom:auto;top:calc(env(safe-area-inset-top) + 12px)}
   <div id="tree"></div>
   <div id="dolist"></div>
   <div id="planlist"></div>
+  <details class="foot" id="howto"><summary>How Yodo works</summary><div class="howbody"></div></details>
   <div class="sig" aria-hidden="true">yodo</div>
-  <div class="foot">
-    <span class="kbline"><kbd>Enter</kbd> new line · <kbd>Tab</kbd> tuck under · <kbd>⇧Tab</kbd> pull out ·
-    <kbd>⌫</kbd> on empty removes<br></span>
-    Every line has a dot on the right. Tap it to step inside — that is how a to-do
-    becomes a project.<br>
-    <span class="key">⏱︎</span> urgent · <span class="key">Imp</span> important ·
-    <span class="key"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" style="vertical-align:-1px"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg></span> a day · <span class="key">↻</span> repeats ·
-    <span class="key">⬤</span> colour<br>
-    Swipe sideways to move between Map, Plan and Do.
-  </div>
 </main>
 <button id="addb" aria-label="Add a line" title="Add a line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 
@@ -1347,6 +1357,35 @@ document.getElementById('undo-b').onclick=()=>{
 
 /* ---------- render ---------- */
 let renderDay=0;
+/* HOW YODO WORKS. Open on the first visits, then folded to one quiet line that
+   opens again whenever you like; your own choice to open or fold it is kept.
+   Phones get taps and swipes; laptops get keys and clicks (Mac keys on a Mac). */
+function howTo(){
+  const el=document.getElementById('howto');if(!el)return;
+  const touch=matchMedia('(pointer:coarse)').matches,mac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
+  const alt=mac?'\u2325':'Alt',cmd=mac?'\u2318':'Ctrl',k=x=>'<kbd>'+x+'</kbd>';
+  const marks='<div class="howmarks"><span><b class="lg-urg">\u23F1\uFE0E</b> urgent</span><span><b class="lg-imp">Imp</b> important</span>'+
+    '<span><b><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" style="vertical-align:-1px"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg></b> a day</span><span><b>\u21BB</b> repeats</span><span><b>\u2B24</b> colour</span></div>';
+  el.querySelector('.howbody').innerHTML=touch?
+    '<ul class="howlist">'+
+      '<li>Tap a line for its tools: tuck it under, move it, give it a day or a mark. Tap again to write; <b>Enter</b> starts the next line.</li>'+
+      '<li>Tap the <b>dot</b> on a line\u2019s right to step inside it. That is how a to-do becomes a project.</li>'+
+      '<li>The round <b>+</b> adds a line from anywhere. The glass finds anything.</li>'+
+      '<li>Swipe sideways to go between Map, Plan and Do.</li></ul>'+marks
+   :'<div class="howkeys">'+
+      '<span>'+k('Enter')+'</span><span>new line</span><span>'+k('Tab')+'</span><span>tuck under</span>'+
+      '<span>'+k('\u21E7Tab')+'</span><span>pull out</span><span>'+k('\u21E7'+alt+' \u2191\u2193')+'</span><span>move a line</span>'+
+      '<span>'+k('\u232B')+'</span><span>on an empty line, removes it</span><span>'+k('/')+' or '+k(cmd+' K')+'</span><span>find</span>'+
+      '<span>'+k(cmd+' Z')+'</span><span>undo</span></div>'+
+    '<ul class="howlist"><li>Click the <b>dot</b> on a line\u2019s right to step inside it. That is how a to-do becomes a project.</li>'+
+      '<li>The round <b>+</b> adds a line from anywhere.</li></ul>'+marks;
+  /* only a person's own open or fold is remembered, never the automatic one */
+  const own=HINT.howto,want=own?own==='open':hint('map');
+  if(el.open!==want){el._auto=true;el.open=want}el._want=want;
+  /* browsers merge quick toggles into one event: it is automatic only if it landed where we put it */
+  el.ontoggle=()=>{const auto=el._auto&&el.open===el._want;el._auto=false;if(auto)return;
+    HINT.howto=el.open?'open':'shut';try{localStorage.setItem('yodo.hints',JSON.stringify(HINT))}catch(e){}};
+}
 let lastFace=null;
 function render(){
   renderDay=dayStart(Date.now());
@@ -1363,7 +1402,7 @@ function render(){
   document.getElementById('planlist').style.display = mode==='plan' ?'':'none';
   document.body.classList.toggle('wide',mode==='plan');
   /* the keyboard and legend notes describe Map's rows, so they live in Map */
-  const ft=document.querySelector('main > .foot');if(ft)ft.style.display=mode==='map'&&hint('map')?'':'none';
+  const ft=document.getElementById('howto');if(ft)ft.style.display=mode==='map'?'':'none';
   /* the heading is the place's own name, and only editable in Map */
   document.getElementById('title').contentEditable = mode==='map'?'true':'false';
   document.getElementById('fold').style.display = mode==='map'?'':'none';
@@ -2693,6 +2732,7 @@ function reveal(n){shutSheet();const f=find(n.id);if(!f)return;
   const el=document.querySelector('.t[data-id="'+n.id+'"]');
   if(el){const row=el.closest('.row');row.classList.add('found');el.scrollIntoView({block:'center'})}}
 document.getElementById('find').onclick=openFind;
+howTo();
 document.getElementById('addb').onclick=openAdd;
 document.addEventListener('keydown',e=>{
   const t=e.target,typing=t.closest&&t.closest('input,textarea,[contenteditable="true"]');
@@ -3079,7 +3119,7 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 29</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 30</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
