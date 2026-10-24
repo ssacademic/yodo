@@ -90,7 +90,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 /* iOS zooms the whole page when a focused field is under 16px */
 .note:focus{font-size:16px}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:var(--r1)}
-main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow-y:auto}
+main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow-y:auto;
+  scroll-padding-top:calc(env(safe-area-inset-top) + 96px)}   /* what scrolls into view lands below the sticky header */
 @media (min-width:700px) and (not (pointer:coarse)){
   html,body{height:auto;min-height:100%}
   main{height:auto;min-height:100dvh;overflow:visible}
@@ -105,7 +106,7 @@ main{width:100%;max-width:640px;padding:0 var(--s5) 180px;height:100dvh;overflow
 .bar1 .icons{display:flex;gap:var(--s2);justify-self:end}
 .bar2{display:flex;align-items:center;gap:12px;margin-top:2px;min-height:30px}
 .brand{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
-  font-weight:400;font-size:calc(16px*var(--fs));letter-spacing:.055em;
+  font-weight:400;font-size:calc(16px*min(var(--fs),1.12));letter-spacing:.055em;
   color:var(--faint);text-transform:lowercase;
   transition:color .25s}
 .brand:hover{color:var(--dim)}
@@ -130,6 +131,8 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .kids .kids{margin-left:8px;padding-left:var(--indent);position:relative;
   padding-top:var(--s1);padding-bottom:var(--s2)}
 .kids .kids::before{content:'';position:absolute;left:0;top:0;bottom:6px;width:1px;background:var(--guide)}
+.kids .kids .kids .kids .kids .kids{margin-left:0;padding-left:8px}
+.kids .kids .kids .kids .kids .kids .kids .kids .kids{padding-left:0}
 
 .row{display:flex;align-items:flex-start;gap:var(--row-gap);min-height:var(--row);
   padding:var(--s2) 0;transition:opacity .35s}
@@ -196,7 +199,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
    never be squeezed into a vertical column of letters. */
 .main{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;
   column-gap:12px;row-gap:2px}
-.t{flex:1 1 auto;min-width:15ch;outline:none;overflow-wrap:anywhere;min-height:1.4em;
+.t{flex:1 1 auto;min-width:min(15ch,45vw);outline:none;overflow-wrap:anywhere;min-height:1.4em;
   text-wrap:pretty;
   font-size:calc(var(--t-row)*var(--fs));line-height:1.36;letter-spacing:-.005em}
 .t[contenteditable="true"]:empty::before{content:'\200b'}
@@ -302,8 +305,9 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 /* ---------- mode toggle ---------- */
 .modes{display:flex;background:var(--hair);border-radius:var(--rp);padding:2px;flex:none}
 .modes button{padding:11px 16px;border-radius:var(--rp);min-height:44px;
-  font-size:calc(12.5px*var(--fs));
+  font-size:calc(12.5px*min(var(--fs),1.12));
   color:var(--dim);letter-spacing:.02em;transition:background .22s,color .22s}
+.modes button:focus-visible{outline-offset:-3px;outline-color:color-mix(in srgb,var(--acc) 60%,transparent)}
 .modes button.on{background:var(--paper);color:var(--ink);
   box-shadow:0 1px 3px #2a241c1a;font-weight:500}
 
@@ -353,7 +357,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 /* ---------- Do: today's rows are flat; tap for choices ---------- */
 .dodate{font-size:calc(13px*var(--fs));color:var(--faint);margin-right:auto}
 .dlist{display:flex;flex-direction:column;margin-top:var(--s3)}
-.drow{display:grid;grid-template-columns:auto 1fr auto;gap:var(--s3);align-items:start;padding:var(--s3) 2px;
+.drow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--s3);align-items:start;padding:var(--s3) 2px;
   border-bottom:1px solid var(--hair);cursor:pointer;border-radius:var(--r1);transition:background .15s,opacity .3s}
 .drow:last-child{border-bottom:none}
 .drow:hover{background:var(--hair)}
@@ -368,6 +372,8 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .door{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;
   margin:var(--s5) 0 0;padding:var(--s3) var(--s4);border-radius:var(--r2);background:var(--hair);
   font-size:calc(13px*var(--fs));color:var(--dim);text-align:left}
+.leafhere{margin-top:var(--s4);padding:var(--s4);border-radius:var(--r2);background:var(--hair);font-size:calc(14px*var(--fs));color:var(--dim)}
+.leafhere p{margin-bottom:var(--s3)}
 .door b{color:var(--acc-t);font-weight:500;white-space:nowrap}
 .qadd{display:flex;gap:8px;margin:var(--s4) 0 0;max-width:560px}
 .qadd input{flex:1;min-width:0;background:transparent;border:1px dashed color-mix(in srgb,var(--faint) 55%,transparent);
@@ -379,36 +385,37 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
    still clears 4.5:1; on the page itself the original grey already does */
 .pcol,.pquad,.pcard,.sin,.theone,.pdone{--faint:var(--faint-s)}
 /* ---------- Plan ---------- */
-body.wide main{max-width:1400px}
+main{max-width:1400px}
+body:not(.wide) main>:not(.top),body:not(.wide) .bar2{max-width:596px;margin-left:auto;margin-right:auto;width:100%}
 .pbar{flex-wrap:wrap}
 .plede{font-size:calc(12.5px*var(--fs));color:var(--faint);margin:var(--s2) 0 0}
 .pboard{display:flex;gap:var(--s3);overflow-x:auto;align-items:flex-start;margin-top:var(--s4);padding-bottom:var(--s3)}
-.pcol{flex:1 1 200px;min-width:196px;max-width:340px;display:flex;flex-direction:column;border-radius:var(--r3);
+.pcol{flex:1 1 0;min-width:150px;max-width:340px;display:flex;flex-direction:column;border-radius:var(--r3);
   background:var(--hair);padding:var(--s3) var(--s2) var(--s2);min-height:170px;transition:background .15s,box-shadow .15s}
 .pcol.focus{background:var(--paper);box-shadow:0 10px 30px -16px rgba(42,36,28,.35),0 0 0 1px var(--hair)}
-.pcol.rail{flex:0 0 220px;min-width:220px;background:transparent;border:1px dashed color-mix(in srgb,var(--faint) 45%,transparent)}
-.pcol.rail.shut{flex:0 0 auto;min-width:0;min-height:0;padding-bottom:var(--s3)}
+.pcol.rail{flex:1.15 1 0;min-width:170px;background:transparent;border:1px dashed color-mix(in srgb,var(--faint) 45%,transparent)}
+.pcol.rail.tray-folded{flex:0 0 auto;min-width:0;min-height:0;padding-bottom:var(--s3)}
 .pcol.late .ph h2{color:var(--late)} .pcol.focus .ph h2{color:var(--acc-t)}
 .pcol.slotted{flex-grow:1.2;padding-bottom:var(--s3)}
 .pover{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--acc) 50%,transparent)!important;
   background:color-mix(in srgb,var(--acc) 10%,var(--hair))!important}
 .ph{display:flex;align-items:baseline;gap:var(--s2);padding:0 var(--s2) var(--s2)}
 .ph h2{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;font-size:calc(16px*var(--fs));font-weight:500}
-.ph .d{font-size:12px;color:var(--faint)} .ph .n{margin-left:auto;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
-.ptoggle{font-size:12px;color:var(--acc-t);padding:4px 8px;border-radius:var(--rp);min-height:32px}
-.pact{margin:0 var(--s2) var(--s2);font-size:12.5px;color:var(--late);text-align:left;padding:6px 0;min-height:32px}
+.ph .d{font-size:calc(12px*var(--fs));color:var(--faint)} .ph .n{margin-left:auto;font-size:calc(12px*var(--fs));color:var(--faint);font-variant-numeric:tabular-nums}
+.ptoggle{font-size:calc(12px*var(--fs));color:var(--acc-t);padding:4px 8px;border-radius:var(--rp);min-height:32px}
+.pact{margin:0 var(--s2) var(--s2);font-size:calc(12.5px*var(--fs));color:var(--late);text-align:left;padding:6px 0;min-height:32px}
 .pslot{border-radius:var(--r2);padding:6px 4px 8px}
 .pslot+.pslot{border-top:1px solid var(--hair);border-radius:0}
-.psh{display:flex;align-items:baseline;gap:6px;padding:2px 6px 6px;font-size:12.5px;color:var(--faint)}
+.psh{display:flex;align-items:baseline;gap:6px;padding:2px 6px 6px;font-size:calc(12.5px*var(--fs));color:var(--faint)}
 .psh b{font-weight:600;color:var(--dim)} .psh .n{margin-left:auto}
-.pfree{font-size:12px;color:var(--faint);padding:2px 6px}
+.pfree{font-size:calc(12px*var(--fs));color:var(--faint);padding:2px 6px}
 .pcards{display:flex;flex-direction:column;gap:6px;min-height:40px;flex:1}
 .pslot .pcards{min-height:0}
-.pempty{font-size:12.5px;color:var(--faint);padding:var(--s3) var(--s2);border-radius:var(--r2);
+.pempty{font-size:calc(12.5px*var(--fs));color:var(--faint);padding:var(--s3) var(--s2);border-radius:var(--r2);
   border:1px dashed var(--hair);text-align:center}
-.plimit{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--faint);padding:4px var(--s2)}
+.plimit{display:flex;align-items:center;gap:8px;font-size:calc(11.5px*var(--fs));color:var(--faint);padding:4px var(--s2)}
 .plimit::before,.plimit::after{content:"";flex:1;height:1px;background:var(--hair)}
-.pcard{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;background:var(--paper);border-radius:var(--r2);
+.pcard{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;background:var(--paper);border-radius:var(--r2);
   padding:10px 12px 10px 10px;box-shadow:0 1px 2px rgba(42,36,28,.08),0 6px 18px -12px rgba(42,36,28,.28);
   cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-y;position:relative}
 .pcol.focus .pcard{box-shadow:0 0 0 1px var(--hair)}
@@ -423,21 +430,42 @@ body.wide main{max-width:1400px}
 .ptick::after{content:"";position:absolute;inset:-12px}
 .ptick:hover{border-color:var(--acc)}
 .ptx{min-width:0}
-.pcr{font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.pcr{font-size:calc(11.5px*var(--fs));color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
 .pt{font-size:calc(14.5px*var(--fs));overflow-wrap:anywhere}
-.pcue{font-size:12.5px;color:var(--faint);margin-top:2px}
-.pmk{display:flex;gap:8px;margin-top:4px;font-size:12px;flex-wrap:wrap}
+.pcue{font-size:calc(12.5px*var(--fs));color:var(--faint);margin-top:2px}
+.pmk{display:flex;gap:8px;margin-top:4px;font-size:calc(12px*var(--fs));flex-wrap:wrap}
 .mk.soft{color:var(--faint)}
+.pparts{display:flex;flex-direction:column;gap:2px;margin-top:6px;border-top:1px solid var(--hair);padding-top:6px}
+.ppart{text-align:left;font-size:calc(13px*var(--fs));color:var(--dim);padding:5px 6px;border-radius:var(--r1);min-height:32px;overflow-wrap:anywhere}
+.ppart::before{content:'\2022\00a0\00a0';color:var(--faint)}
+.ppart:hover{background:var(--hair);color:var(--ink)}
+.mk.new{color:var(--acc-t);font-weight:600;font-size:calc(10.5px*var(--fs));letter-spacing:.09em;text-transform:uppercase}
+.pcard.fresh{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--acc) 55%,transparent),0 6px 18px -12px rgba(42,36,28,.28)}
+.pcard.flash{animation:pflash 1.8s var(--ease)}
+@keyframes pflash{0%,25%{background:color-mix(in srgb,var(--acc) 22%,var(--paper))}100%{background:var(--paper)}}
+@media (prefers-reduced-motion:reduce){.pcard.flash{animation:none}}
+.pmore{font-size:calc(12px*var(--fs));color:var(--faint);padding:2px 6px}
+.pnotes{display:flex;align-items:baseline;gap:6px;width:100%;text-align:left;margin-top:var(--s2);padding:8px 6px;min-height:40px;
+  border-top:1px dashed color-mix(in srgb,var(--faint) 45%,transparent);font-size:calc(13px*var(--fs));color:var(--dim);font-weight:500}
+.pnotes .pna{width:1em;color:var(--faint)}
+.pnotes .n{font-size:calc(12px*var(--fs));color:var(--faint);font-variant-numeric:tabular-nums}
+.pnotes .pnw{margin-left:auto;font-size:calc(12px*var(--fs));color:var(--faint);font-weight:400}
+.pnotes:hover{color:var(--ink)}
+.fsrow{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+.fsrow input{flex:1;min-width:0;accent-color:var(--acc);height:32px}
+.fsrow .opt{min-width:44px;padding:8px 0;text-align:center}
+.fsrow .fsdn{font-size:12px}.fsrow .fsup{font-size:19px}
+.fsv{font-weight:400;color:var(--faint);margin-left:6px}
 .pmatrix{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);margin-top:var(--s4);align-items:start}
 .pquad{border-radius:var(--r3);background:var(--hair);padding:var(--s3) var(--s2) var(--s2);min-height:170px;display:flex;flex-direction:column}
 .pquad .pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));align-content:start;max-height:56vh;overflow:auto;padding:2px}
 .pquad.q1{background:var(--paper);box-shadow:0 10px 30px -16px rgba(42,36,28,.35),0 0 0 1px var(--hair)}
 .pquad.q1 h2{color:var(--late)} .pquad.q2 h2{color:var(--acc-t)}
-.pwhy{font-size:12px;color:var(--faint);padding:0 var(--s2) var(--s2);margin-top:-4px}
+.pwhy{font-size:calc(12px*var(--fs));color:var(--faint);padding:0 var(--s2) var(--s2);margin-top:-4px}
 .pdone{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s5)}
 .pdone h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-right:var(--s2)}
-.pchip{font-size:13px;color:var(--faint);text-decoration:line-through;padding:6px 12px;border-radius:var(--rp);background:var(--hair);min-height:36px}
-.pdone .none{font-size:13px;color:var(--faint)}
+.pchip{font-size:calc(13px*var(--fs));color:var(--faint);text-decoration:line-through;padding:6px 12px;border-radius:var(--rp);background:var(--hair);min-height:36px}
+.pdone .none{font-size:calc(13px*var(--fs));color:var(--faint)}
 html.plock,html.plock body,html.plock main{overflow:hidden!important;overscroll-behavior:none}
 html.plock .pcard{touch-action:none}
 @media (max-width:760px){
@@ -445,7 +473,8 @@ html.plock .pcard{touch-action:none}
   .pcol,.pcol.rail,.pcol.slotted{flex:none;width:100%;min-width:0;max-width:none;min-height:0}
   .pmatrix{grid-template-columns:1fr}
 }
-.dostep{font-size:calc(11.5px*var(--fs));letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.dcue,.pcue,.dtx,.pt,.theone,.sin h3,.door span{overflow-wrap:anywhere;min-width:0}
+.dostep{font-size:calc(10.5px*var(--fs));letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
 .cb.showall{margin-top:var(--s4);font-size:calc(13px*var(--fs));color:var(--acc-t);
   background:color-mix(in srgb,var(--acc) 12%,transparent);padding:10px 16px}
 .lens button{padding:11px 16px;border-radius:var(--rp);min-height:44px;
@@ -649,22 +678,143 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
   .kids .kids::before{background:#ddd}
 }
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
+/* ONE LOOK. Map, Plan and Do share it: paper and hairlines, sans headings for
+   groups (the serif is kept for page titles and the one thing), and an accent
+   rule on top of whatever matters now (Do's one thing, Plan's Today, Urgent and important) */
+.ph h2,.pquad h2,.band h2{font-family:var(--ff),system-ui,sans-serif;font-variation-settings:normal;font-weight:600;
+  font-size:calc(15px*var(--fs));letter-spacing:-.01em}
+.pcol,.pquad{background:transparent;border:1px solid color-mix(in srgb,var(--faint) 24%,transparent);box-shadow:none}
+.pcol.rail{border-style:dashed}
+.pcol.focus,.pquad.q1{background:var(--paper);border:1px solid var(--hair);border-top:3px solid var(--acc);
+  box-shadow:0 10px 30px -18px rgba(42,36,28,.3)}
+.pcard{box-shadow:none;border:1px solid color-mix(in srgb,var(--faint) 20%,transparent)}
+.pcard.compact{box-shadow:none}
+.pt{font-size:calc(15.5px*var(--fs))}
+.dtx{font-size:calc(16.5px*var(--fs))}
+.drow{grid-template-columns:auto minmax(0,1fr)}
+.dmk{grid-column:2;justify-content:flex-start;max-width:none;padding-top:0}
+.dmk:empty{display:none}
+/* the notes heading runs across Matrix's two-up grid, not inside a cell */
+.pquad .pnotes{grid-column:1/-1}
+/* Matrix on wider screens: the four boxes share one height, set by the busiest
+   box and capped, so the grid stays square without empty slabs */
+.pcard.compact.fresh{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--acc) 55%,transparent)}
+@media (min-width:761px){.pmatrix{align-items:stretch;grid-auto-rows:1fr}.pquad{min-height:220px}.pquad .pcards{max-height:46vh}}
+
+/* ============ LIGHTER: the prototype ============
+   Words at rest, tools on touch. One frame that never moves, one way to add,
+   guidance that teaches and then goes quiet, warm colours with one meaning each. */
+:root{--imp:#8A6410}
+[data-theme="light"]{--imp:#86620F}
+[data-theme="dark"]{--imp:#D6A84A}
+.mk.imp,.pquad.q2 h2{color:var(--imp)}
+#fold,#tally{display:none!important}
+.brand{font-family:var(--ff),system-ui,sans-serif;font-variation-settings:normal;font-size:calc(15px*min(var(--fs),1.12));font-weight:600;
+  color:var(--ink);letter-spacing:-.01em;text-transform:none;opacity:0;transition:opacity .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top{border-bottom-color:transparent;transition:border-color .2s}
+.top.scrolled{border-bottom-color:var(--hair)} .top.scrolled .brand{opacity:1}
+.ico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round}
+#addb{position:fixed;right:max(20px,calc(50vw - 690px));bottom:calc(env(safe-area-inset-bottom) + 20px);z-index:40;width:56px;height:56px;border-radius:50%;
+  background:radial-gradient(120% 120% at 30% 20%,color-mix(in srgb,var(--acc) 78%,#fff) 0%,var(--acc) 48%,color-mix(in srgb,var(--acc) 82%,#000) 100%);
+  color:#FFF8EE;box-shadow:0 14px 28px -12px color-mix(in srgb,var(--acc) 75%,#000),0 2px 5px rgba(42,36,28,.2),inset 0 1px 0 rgba(255,255,255,.25);
+  display:grid;place-items:center;transition:transform .2s var(--spring),box-shadow .2s}
+#addb:hover{transform:translateY(-1px)} #addb:active{transform:scale(.9)}
+#addb svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;fill:none}
+@media (max-width:760px){
+  .bar1{grid-template-columns:1fr auto}
+  .modes{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:40;padding:4px;
+    background:color-mix(in srgb,var(--paper) 80%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);
+    box-shadow:0 14px 32px -16px rgba(42,36,28,.5),0 0 0 1px var(--hair)}
+  .modes button{min-width:64px}
+  #undo{bottom:calc(env(safe-area-inset-bottom) + 92px)}
+  .top{pointer-events:none} .top .icons,.top .crumbs,.top .modes{pointer-events:auto}
+  body.flat .top:not(.scrolled){background:transparent}
+  body.flat h1#title{margin-top:-46px;padding-right:92px}
+  main{padding-bottom:200px}
+}
+.sin.tall{min-height:72dvh;max-height:92dvh}
+.findrow{position:sticky;top:0;z-index:2;background:var(--paper);display:flex;gap:var(--s3);align-items:center;
+  padding:var(--s4) 0 var(--s3);border-bottom:1px solid var(--hair);margin-bottom:var(--s2)}
+.findrow svg{width:19px;height:19px;stroke:var(--faint);fill:none;stroke-width:1.9;stroke-linecap:round;flex:none}
+.findrow input{flex:1;min-width:0;border:none;background:transparent;font:inherit;font-size:calc(18px*var(--fs));color:var(--ink);outline:none;padding:8px 0}
+.findrow input::-webkit-search-cancel-button{display:none}
+.findlbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:var(--s3) 8px var(--s1)}
+.findhit{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;text-align:left;padding:10px 8px;border-radius:var(--r2);min-height:44px}
+.findhit:hover,.findhit:focus-visible{background:var(--hair)}
+.findhit .fcr{font-size:calc(11.5px*var(--fs));color:var(--faint)}
+.findhit .ft{font-size:calc(16px*var(--fs));color:var(--ink);overflow-wrap:anywhere}
+.findhit .ft i{font-style:normal;color:var(--faint);font-size:.82em}
+.findhit .fcue{font-size:calc(13px*var(--fs));color:var(--faint)}
+.findhit.done .ft{text-decoration:line-through;color:var(--faint)}
+.findhit mark{background:color-mix(in srgb,var(--imp) 24%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.findnone{color:var(--faint);padding:var(--s4) 8px}
+.addf{display:flex;gap:var(--s2);align-items:center}
+.addf input{flex:1;min-width:0;font:inherit;font-size:calc(18px*var(--fs));padding:12px 14px;border-radius:var(--r2);
+  border:1px solid color-mix(in srgb,var(--faint) 30%,transparent);background:var(--bg);color:var(--ink);outline:none;transition:border-color .2s}
+.addf input:focus{border-color:var(--acc)}
+.addmeta{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s3);align-items:center;margin-top:var(--s3);font-size:calc(13px*var(--fs));color:var(--dim)}
+.addmeta b{font-weight:600;color:var(--ink)}
+.addmeta .chip{padding:6px 12px;border-radius:var(--rp);background:var(--hair);color:var(--dim);min-height:32px}
+.addmeta .chip.on{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc-t)}
+.addhint{width:100%;color:var(--faint);font-size:calc(12px*var(--fs))}
+.addlog{margin-top:var(--s3);display:flex;flex-direction:column;gap:6px;font-size:calc(13.5px*var(--fs));color:var(--dim)}
+.addrow{display:flex;align-items:baseline;gap:8px}
+.addrow .ok{color:var(--acc-t)} .addrow .at{flex:1;min-width:0;overflow-wrap:anywhere} .addrow i{font-style:normal;color:var(--faint)}
+.addrow.undone .at{text-decoration:line-through;color:var(--faint)} .addrow.undone .ok{visibility:hidden}
+.addundo{color:var(--acc-t);font-size:calc(12.5px*var(--fs));padding:4px 8px;min-height:32px}
+/* a toast never covers an open sheet */
+body:has(.sheet.on) #undo{bottom:auto;top:calc(env(safe-area-inset-top) + 12px)}
+.addlog div{animation:arrive .3s var(--ease)}
+.donecount{color:var(--acc-t);font-size:calc(13px*var(--fs));padding:8px 2px;min-height:32px;margin-right:auto}
+.dobar .dodate{margin-right:0}
+.row.found{animation:found 2.2s var(--ease);border-radius:var(--r1)}
+@keyframes found{0%,30%{background:color-mix(in srgb,var(--imp) 18%,transparent)}100%{background:transparent}}
+.arrive{animation:arrive .3s var(--ease)}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.arrive,.row.found,.addlog div{animation:none}}
+
+/* ---- the header follows the scroll: it frosts in, the big title fades as it slides
+   under, the small title eases in. --hp runs 0 to 1 over the first 72px. ---- */
+:root{--hp:0}
+.top{background:transparent!important;border-bottom-color:transparent!important;isolation:isolate}
+.top::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:var(--hp);
+  background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);
+  box-shadow:0 1px 0 color-mix(in srgb,var(--ink) calc(var(--hp)*9%),transparent)}
+/* one title, morphing: it pins under the header and shrinks into the small title, keeping its face */
+#title{position:sticky;top:var(--toph,0px);z-index:21;
+  transform:translateY(calc(var(--hp)*-6px)) scale(calc(1 - var(--hp)*.38));transform-origin:left center;will-change:transform}
+.top::before{bottom:calc(-1*var(--bandx,0px))}
+.brand{opacity:1!important;position:relative;display:block;height:1.4em}
+.brand .wm,.brand .mt{position:absolute;left:0;top:0;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.brand .wm{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;font-weight:400;letter-spacing:.06em;
+  color:var(--faint);text-transform:lowercase;opacity:calc(1 - var(--hp)*2)}
+.brand .mt{display:none}
+@media (max-width:760px){.brand .wm{display:none}
+  body.flat h1#title{top:calc(env(safe-area-inset-top) + 13px);padding-right:0;max-width:calc(100% - 96px);margin-left:0;margin-right:auto;transform:scale(calc(1 - var(--hp)*.38))}}
+/* the signature at the end of every page */
+.sig{margin:var(--s6) auto 0;text-align:center;font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 1;
+  font-size:calc(17px*min(var(--fs),1.12));letter-spacing:.08em;color:var(--faint);opacity:.55;text-transform:lowercase;user-select:none}
+/* top-level lines sit in the middle of their band, not near its top */
+.d1.holds,.d1.holds + .d1:not(.holds){margin-top:var(--s5);padding-top:var(--s4)}
+.d1:first-child{margin-top:0;padding-top:0}
+
 </style>
 </head>
 <body data-theme="paper">
 <main>
   <div class="top">
     <div class="bar1">
-      <span class="brand">yodo</span>
+      <span class="brand" id="mini" aria-hidden="true"><span class="wm">yodo</span><span class="mt"></span></span>
       <div class="modes" id="modes">
         <button data-m="map" class="on">Map</button>
         <button data-m="plan">Plan</button>
         <button data-m="do">Do</button>
       </div>
       <div class="icons">
-        <button class="ico" id="fold" aria-label="Expand or collapse everything">⇕</button>
-        <button class="ico" id="tally" aria-label="What got finished" style="display:none">◨</button>
-        <button class="ico" id="gear" aria-label="Settings">⚙</button>
+        <button class="ico" id="find" aria-label="Find" title="Find (/)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg></button>
+        <button class="ico" id="fold" aria-label="Expand or collapse everything" title="Expand or collapse everything">⇕</button>
+        <button class="ico" id="tally" aria-label="What got finished" title="What got finished" style="display:none">✓</button>
+        <button class="ico" id="gear" aria-label="Settings" title="Settings">⚙</button>
       </div>
     </div>
     <div class="bar2" id="bar2">
@@ -675,6 +825,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
   <div id="tree"></div>
   <div id="dolist"></div>
   <div id="planlist"></div>
+  <div class="sig" aria-hidden="true">yodo</div>
   <div class="foot">
     <span class="kbline"><kbd>Enter</kbd> new line · <kbd>Tab</kbd> tuck under · <kbd>⇧Tab</kbd> pull out ·
     <kbd>⌫</kbd> on empty removes<br></span>
@@ -686,6 +837,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.82em;background:var(--ha
     Swipe sideways to move between Map, Plan and Do.
   </div>
 </main>
+<button id="addb" aria-label="Add a line" title="Add a line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <div id="intro">
   <button class="skip" id="in-skip">Skip</button>
@@ -771,6 +923,7 @@ function sane(n,depth,seen){
   if(n.touched!=null&&!Number.isFinite(n.touched))n.touched=0;
   if(n.mv!=null&&!Number.isFinite(n.mv))n.mv=0;
   if(n.ord!=null&&!Number.isFinite(n.ord))delete n.ord;
+  if(n.star){n.imp=true;delete n.star}
   n.done=!!n.done;
   n.kids=Array.isArray(n.kids)?n.kids.map(k=>sane(k,depth+1,seen)).filter(Boolean):[];
   return n;
@@ -1136,6 +1289,17 @@ window.__sync={syncNow:syncNow,soon:syncSoon,state:()=>SY,
   setFetch:f=>{syFetch=f},configure:(u,k)=>{SYNC_URL=u;SYNC_KEY=k},on:syncOn,newCode:syCodeNew};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&syncOn())syncNow()});
 
+/* left open overnight: Today, overdue and repeats must be right in the morning.
+   Never redraw under someone mid-word. */
+function newDayCheck(){
+  if(document.hidden||dayStart(Date.now())===renderDay)return;
+  const a=document.activeElement;if(a&&(a.isContentEditable||/^(INPUT|TEXTAREA)$/.test(a.tagName)))return;
+  render();
+}
+document.addEventListener('visibilitychange',newDayCheck);
+window.addEventListener('focus',newDayCheck);
+setInterval(newDayCheck,60000);
+
 /* ---------- getting your list out of here ---------- */
 function dl(name,text,type){
   const b=new Blob([text],{type:type||'text/plain'});
@@ -1182,7 +1346,16 @@ document.getElementById('undo-b').onclick=()=>{
 };
 
 /* ---------- render ---------- */
+let renderDay=0;
+let lastFace=null;
 function render(){
+  renderDay=dayStart(Date.now());
+  if(mode!==lastFace){const first=lastFace===null;lastFace=mode;
+    if(!first)requestAnimationFrame(()=>{[mode==='map'?'tree':mode==='do'?'dolist':'planlist'].forEach(id=>{   /* the title has its own motion (the scroll morph) */
+      const el=document.getElementById(id);if(!el)return;el.classList.remove('arrive');void el.offsetWidth;el.classList.add('arrive')})})}
+  requestAnimationFrame(()=>{const m=document.querySelector('#mini .mt'),h=document.getElementById('title');if(m&&h)m.textContent=h.textContent;hdr();
+    const cr=document.getElementById('crumbs');document.body.classList.toggle('flat',!(mode==='map'&&cr&&cr.children.length))});
+  if(mode!=='plan'||(freshZoom!==null&&freshZoom!==zoom)){FRESH.clear();freshZoom=null}
   tidyTree();
   rollRepeats();
   document.getElementById('tree').style.display   = mode==='map'?'':'none';
@@ -1190,10 +1363,10 @@ function render(){
   document.getElementById('planlist').style.display = mode==='plan' ?'':'none';
   document.body.classList.toggle('wide',mode==='plan');
   /* the keyboard and legend notes describe Map's rows, so they live in Map */
-  const ft=document.querySelector('main > .foot');if(ft)ft.style.display=mode==='map'?'':'none';
+  const ft=document.querySelector('main > .foot');if(ft)ft.style.display=mode==='map'&&hint('map')?'':'none';
   /* the heading is the place's own name, and only editable in Map */
   document.getElementById('title').contentEditable = mode==='map'?'true':'false';
-  document.getElementById('fold').style.visibility = mode==='map'?'':'hidden';
+  document.getElementById('fold').style.display = mode==='map'?'':'none';
   document.getElementById('tally').style.display = mode==='do'?'':'none';
   document.querySelectorAll('#modes button').forEach(b=>
     b.classList.toggle('on',b.dataset.m===mode));
@@ -1210,6 +1383,7 @@ function render(){
   const h=document.getElementById('title');
   if(document.activeElement!==h)h.textContent=H.t;
   h.oninput=()=>{H.t=h.textContent;touch(H);saveSoon()};
+  h.onpaste=e=>{if(mode!=='map'){e.preventDefault();return}plainPaste(e,h);H.t=h.textContent;touch(H);saveSoon()};
 
   const t=document.getElementById('tree');t.innerHTML='';
   if(!H.kids.length&&H.id===ROOT.id){
@@ -1271,6 +1445,7 @@ function rowEl(node,parent,depth){
     }
   };
   tx.oninput=()=>{node.t=tx.textContent;touch(node);saveSoon()};
+  tx.onpaste=e=>pasteInto(e,tx,node,parent);
   tx.onkeydown=e=>key(e,node,parent);
 
   const m=document.createElement('div');m.className='marks';
@@ -1278,7 +1453,7 @@ function rowEl(node,parent,depth){
   /* both flags together count as ONE mark, so a date can never be pushed off */
   if(node.urgent||node.imp){
     marks.push('<span class="flags">'+
-      (node.urgent?'<span class="mk urg">\u23F1\uFE0E</span>':'')+
+      (node.urgent?'<span class="mk urg">\u23F1\uFE0E'+(node.imp||lab||node.repeat?'':' urgent')+'</span>':'')+
       (node.imp?'<span class="mk imp">Imp</span>':'')+'</span>');
   }
   if(node.repeat&&isDone(node))marks.push(`<span class="mk rep">next ${esc(label(nextRound(node)).txt)}</span>`);
@@ -1317,6 +1492,7 @@ function rowEl(node,parent,depth){
       nt.dataset.note=node.id;
       if(!node.note)nt.setAttribute('data-ph','1');
       nt.oninput=()=>{node.note=nt.textContent;touch(node);saveSoon()};
+      nt.onpaste=e=>{plainPaste(e,nt);node.note=nt.textContent;touch(node);saveSoon()};
       nt.onclick=e=>e.stopPropagation();
     }
     if(node.note||openId===node.id)wrap.appendChild(nt);
@@ -1325,7 +1501,9 @@ function rowEl(node,parent,depth){
   if(openId===node.id)wrap.appendChild(ctlEl(node,parent,depth));
   if(has&&!node.collapsed){
     const kb=kidsEl(node,depth+1);
-    ghost(kb,node);          /* every open branch offers its own next line */
+    /* the branch you are working in offers its next line; the rest stay quiet
+       (Enter on a line, or the round button, adds anywhere) */
+    if(openId&&(openId===node.id||node.kids.some(k=>k.id===openId)))ghost(kb,node);
     wrap.appendChild(kb);
   }
   return wrap;
@@ -1343,8 +1521,7 @@ function ctlEl(node,parent,depth){
   c.appendChild(shut);
   /* a tray is a tool, not content. it steps back out of the indentation so it
      sits in the same place whatever depth you are working at. */
-  const STEP=26;
-  if(depth>1)c.style.marginLeft=(-(depth-1)*STEP)+'px';
+  if(depth>1)c.style.marginLeft=(-indentOf(depth))+'px';
   const l1=document.createElement('div');l1.className='line';
   const l2=document.createElement('div');l2.className='line';
 
@@ -1383,6 +1560,105 @@ function ctlEl(node,parent,depth){
   mk('&#8635;', node.repeat?'set':'sym', ()=>repeatPick(node), 'Repeats');
   mk(swatch(node), node.hue?'set':'sym', ()=>huePick(node), 'Colour');
   return c;
+}
+
+/* how far a row at this depth sits from the left. Deep levels indent less and
+   then not at all, so twelve levels still fit a phone (the CSS mirrors this) */
+function indentOf(depth){let o=0;for(let k=2;k<=depth;k++)o+=k<=5?26:k<=8?8:0;return o}
+/* PASTE. A copied row brings its HTML (marks, dates, spans) with it, which used to
+   land inside the title ("impo\u23F1Imp\u2026"). Only plain text goes in now. */
+function insertPlain(el,text){
+  const sel=getSelection();
+  if(!sel.rangeCount||!el.contains(sel.anchorNode)){el.textContent+=text;return}
+  const r=sel.getRangeAt(0);r.deleteContents();const tn=document.createTextNode(text);r.insertNode(tn);
+  r.setStartAfter(tn);r.collapse(true);sel.removeAllRanges();sel.addRange(r);el.normalize();
+}
+/* the text in a clipboard, icons included. Emoji are text and come through as
+   they are; many sites (mail, chat, docs) paste emoji as little pictures whose
+   alt text is the emoji, so those are read back as the emoji themselves. */
+const EMO=/\p{Extended_Pictographic}/u, EMOg=/\p{Extended_Pictographic}/gu;
+function htmlText(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');let out='';
+  const BLOCK=/^(P|DIV|LI|TR|H[1-6]|BLOCKQUOTE|PRE|UL|OL|TABLE|SECTION|ARTICLE)$/;
+  (function w(n){n.childNodes.forEach(c=>{
+    if(c.nodeType===3){out+=c.nodeValue.replace(/\s+/g,' ');return}
+    if(c.nodeType!==1)return;
+    const tg=c.tagName;if(tg==='SCRIPT'||tg==='STYLE'||tg==='HEAD')return;
+    if(tg==='BR'){out+='\n';return}
+    if(tg==='IMG'){const a=c.getAttribute('alt')||'',d=c.getAttribute('data-emoji')||'';
+      out+=EMO.test(a)?a:EMO.test(d)?d:'';return}
+    const b=BLOCK.test(tg);if(b&&out&&!out.endsWith('\n'))out+='\n';
+    if(tg==='LI'){let k=0,p=c.parentElement;while(p){if(p.tagName==='LI')k++;p=p.parentElement}out+='  '.repeat(k)}
+    w(c);if(b&&!out.endsWith('\n'))out+='\n'})})(doc.body||doc);
+  return out.replace(/(\S)[ \t]{2,}/g,'$1 ').replace(/[ \t]+\n/g,'\n').replace(/^\n+|\n+$/g,'');
+}
+function clipText(cd){
+  const plain=(cd.getData('text/plain')||'').replace(/\r/g,'');
+  const html=cd.getData('text/html')||'';
+  if(html&&/<img/i.test(html)){const h=htmlText(html);
+    if(!plain.trim()||(h.match(EMOg)||[]).length>(plain.match(EMOg)||[]).length)return h}
+  return plain;
+}
+/* a picture on its own cannot become a line; say so rather than do nothing */
+function clipOnlyPicture(cd,text){
+  if(text.trim())return false;
+  const has=[...(cd.types||[])].some(t=>/^image\/|Files/.test(t));
+  if(has)toastLine('Yodo keeps words only. A picture can’t be pasted, but emoji can.');
+  return has;
+}
+function plainPaste(e,el){
+  const cd=e.clipboardData||window.clipboardData;if(!cd)return;
+  e.preventDefault();const tx=clipText(cd);if(clipOnlyPicture(cd,tx))return;
+  insertPlain(el,tx.replace(/\s*\n\s*/g,' '));
+}
+/* rows are plain text: Ctrl/\u2318-B, I and U, and the browser's own formatting
+   commands, would add bold that vanishes on the next redraw. Text dragged in
+   arrives as plain text too. */
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&/^[biu]$/i.test(e.key)&&e.target.closest&&e.target.closest('[contenteditable="true"]'))e.preventDefault()},true);
+document.addEventListener('beforeinput',e=>{
+  const el=e.target.closest&&e.target.closest('[contenteditable="true"]');if(!el)return;
+  if(/^format/.test(e.inputType)){e.preventDefault();return}
+  if(e.inputType==='insertFromDrop'&&e.dataTransfer){e.preventDefault();
+    const tx=clipText(e.dataTransfer).replace(/\s*\n\s*/g,' ');if(!tx)return;
+    const rg=e.getTargetRanges&&e.getTargetRanges()[0];
+    if(rg){const r=document.createRange();r.setStart(rg.startContainer,rg.startOffset);r.setEnd(rg.endContainer,rg.endOffset);
+      const s=getSelection();s.removeAllRanges();s.addRange(r)}
+    insertPlain(el,tx);el.dispatchEvent(new Event('input',{bubbles:true}))}
+},true);
+/* several lines pasted into a row become lines: indentation nests them, bullets
+   and numbers are dropped, and "[x]" arrives ticked */
+function pasteInto(e,el,node,parent){
+  const cd=e.clipboardData||window.clipboardData;if(!cd)return;
+  e.preventDefault();
+  let raw=clipText(cd);
+  if(clipOnlyPicture(cd,raw))return;
+  /* rows copied from Yodo itself carry their marks as separate lines of text;
+     take only the titles. (A parsed document runs no scripts and loads nothing.) */
+  const html=cd.getData('text/html')||'';
+  if(/class="(?:t|dtx|pt|otitle)"/.test(html)){
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const ts=[...doc.querySelectorAll('.t,.dtx,.pt,.otitle')].map(x=>x.textContent.trim()).filter(Boolean);
+    if(ts.length)raw=ts.join('\n');
+  }
+  const lines=raw.split('\n').filter(l=>l.trim()!=='');
+  const clean=l=>{const ind=(l.match(/^[ \t]*/)[0]).replace(/\t/g,'    ').length;let t=l.trim(),done=false;
+    const bx=t.match(/^[-*\u2022]?\s*\[([ xX])\]\s+/);if(bx){done=bx[1]!==' ';t=t.slice(bx[0].length)}
+    t=t.replace(/^(?:[-*\u2022\u2023\u25E6\u00B7]|\d+[.)])\s+/,'');return {ind,t,done}};
+  if(lines.length<=1){insertPlain(el,lines.length?clean(lines[0]).t:'');node.t=el.textContent;touch(node);saveSoon();return}
+  const items=lines.map(clean);
+  insertPlain(el,items[0].t);node.t=el.textContent;touch(node);
+  const made=[];let last=node;const st=[{ind:items[0].ind,n:node}];
+  items.slice(1).forEach(it=>{
+    const nn=nd(it.t,[],it.done?{done:true,doneAt:Date.now()}:{});
+    while(st.length>1&&it.ind<=st[st.length-1].ind)st.pop();
+    const top=st[st.length-1];
+    if(it.ind>top.ind){const sn=ordSnap(top.n);top.n.kids.push(nn);placeOrd(top.n,nn,sn);top.n.collapsed=false;st.push({ind:it.ind,n:nn})}
+    else{const sn=ordSnap(parent);parent.kids.splice(parent.kids.indexOf(last)+1,0,nn);placeOrd(parent,nn,sn);last=nn;st.length=0;st.push({ind:it.ind,n:nn})}
+    made.push(nn);
+  });
+  save();render();focus(node.id);
+  offerUndo('Pasted '+lines.length+' lines.',()=>{made.slice().reverse().forEach(m=>{const f=find(m.id);if(f)killNode(m,f.parent)})});
 }
 
 /* it asks; it never blocks. a task you cannot save is a task you will not write. */
@@ -1513,21 +1789,25 @@ function ancestry(id){
 let EFF=new Map(), PATH=new Map();
 const E=n=>EFF.get(n)||n;
 function doPool(){
-  EFF=new Map();PATH=new Map();const out=[];
-  (function walk(x,path){
+  EFF=new Map();PATH=new Map();const out=[],UP=new Map();
+  /* up: the day of the nearest project above. A project's day covers its parts,
+     so a part with no day of its own is due with its project (as Plan shows it) */
+  (function walk(x,path,up){
     x.kids.forEach(k=>{
       if(!k.kids.length){
-        if((marked(k)||EFF.has(k))&&(!isDone(k)||keepDone)){out.push(k);PATH.set(k,path)}
+        if((marked(k)||EFF.has(k))&&(!isDone(k)||keepDone)){out.push(k);PATH.set(k,path);
+          if(k.when==null&&up!=null){UP.set(k,up);if(!EFF.has(k))EFF.set(k,{via:[]})}}
         return;
       }
       if(isDone(k))return;
       if(marked(k)){const st=firstOpenLeaf(k);
         if(st){const e=EFF.get(st)||{via:[]};e.via.push(k);EFF.set(st,e)}}
-      walk(k,path.concat(k.id));
+      walk(k,path.concat(k.id),k.when!=null?k.when:up);
     });
-  })(ROOT,[ROOT.id]);
+  })(ROOT,[ROOT.id],null);
   EFF.forEach((e,leaf)=>{
-    const ws=[leaf.when].concat(e.via.map(v=>v.when)).filter(w=>w!=null);
+    let ws=[leaf.when].concat(e.via.map(v=>v.when)).filter(w=>w!=null);
+    if(!ws.length&&UP.has(leaf))ws=[UP.get(leaf)];
     e.when=ws.length?Math.min.apply(null,ws):null;
     e.urgent=!!(leaf.urgent||e.via.some(v=>v.urgent));
     e.imp=!!(leaf.imp||e.via.some(v=>v.imp));
@@ -1705,13 +1985,20 @@ function renderDo(){
   const bar=document.createElement('div');bar.className='dobar';
   const dl=document.createElement('span');dl.className='dodate';
   dl.textContent=new Date(Date.now()).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
-  bar.append(dl,placeChip());
+  bar.append(dl);
+  const fin0=tallyCounts(1)[0];
+  if(fin0){const t=document.createElement('button');t.className='donecount';t.textContent='\u00b7 '+fin0+' done';
+    t.setAttribute('aria-label',fin0+' finished today. See what got finished');t.onclick=()=>document.getElementById('tally').click();bar.append(t)}
+  bar.append(placeChip());
   L.appendChild(bar);
 
   const pool=pickedUp(S);
   const open=pool.filter(n=>!isDone(n));
   const hideOne=oneOffUntil>Date.now();
-  const one=hideOne?null:theOne(open.slice().sort((a,b)=>(E(a).when||Infinity)-(E(b).when||Infinity)));
+  /* a routine is for its day: never suggest one (or a step of one) before it comes round */
+  const early=n=>{const e=E(n),via=(EFF.get(n)||{}).via||[];
+    return (n.repeat||via.some(v=>v.repeat))&&e.when!=null&&dayOff(e.when)>0};
+  const one=hideOne?null:theOne(open.filter(n=>!early(n)).sort((a,b)=>(E(a).when||Infinity)-(E(b).when||Infinity)));
   if(hideOne&&open.length){
     const h=document.createElement('button');h.className='onehid';
     h.innerHTML='<span>One thing hidden until tomorrow</span><b>Show</b>';
@@ -1747,6 +2034,7 @@ function renderDo(){
     L.appendChild(h);
   }
 
+  if(!S.kids.length&&S!==ROOT){L.appendChild(leafHere(S));return}
   /* today's list: overdue first, then today, then urgent with no day */
   const rank=n=>{const e=E(n);return e.when!=null?Math.min(dayOff(e.when),0):1};
   const today=pool.filter(isTodayish).filter(n=>!(one&&n===one.node))
@@ -1761,7 +2049,6 @@ function renderDo(){
     L.insertAdjacentHTML('beforeend','<div class="ghost" style="opacity:.7;cursor:default">'+
       '<span class="g"><i></i></span><span>'+esc(fin?'Nothing else for today. '+fin+' finished today.':'Nothing for today.')+'</span></div>');
   }
-  L.appendChild(quickAddEl('Add something for today…',0));
 
   /* what waits in Plan, counted, with a door to it */
   const later=open.filter(n=>!isTodayish(n)&&!(one&&n===one.node));
@@ -1771,12 +2058,20 @@ function renderDo(){
       if(d===1)c.tom++;else if(d<7)c.week++;else c.later++}});
     const bits=[];
     if(c.tom)bits.push(c.tom+' tomorrow');if(c.week)bits.push(c.week+' later this week');
-    if(c.later)bits.push(c.later+' after that');if(c.none)bits.push(c.none+' with no day');
+    if(c.later)bits.push(c.later+' after that');if(c.none)bits.push(c.none+' important with no day');
     const door=document.createElement('button');door.className='door';
     door.innerHTML='<span>Waiting in Plan: '+esc(bits.join(' · '))+'</span><b>Plan ›</b>';
     door.onclick=()=>{mode='plan';openId=null;save();render()};
     L.appendChild(door);
   }
+}
+/* the place is a single line with no parts: say so, rather than show empty boxes */
+function leafHere(S){
+  const w=document.createElement('div');w.className='leafhere';
+  w.innerHTML='<p>You are inside \u201C'+esc(short(S.t||'(untitled)',40))+'\u201D, which has no parts yet. '+
+    'Anything you add here becomes one of its parts.</p>';
+  const b=document.createElement('button');b.className='opt';b.textContent='Look at everything';
+  b.onclick=()=>goTo(ROOT.id);w.appendChild(b);return w;
 }
 function showAll(){
   const b=document.createElement('button');b.className='cb showall';
@@ -1814,12 +2109,13 @@ function doItem(node){
     render()};
   const main=document.createElement('div');main.className='dmain';
   const anc=ancFrom(node.id,here()).map(a=>a.t).join(' › ');
-  if(anc)main.insertAdjacentHTML('beforeend','<div class="dcrumb">'+esc(anc)+'</div>');
+  if(anc||via.length)main.insertAdjacentHTML('beforeend','<div class="dcrumb">'+esc(anc)+
+    (via.length?(anc?' \u00b7 ':'')+'<span class="dostep">next step</span>':'')+'</div>');
   main.insertAdjacentHTML('beforeend','<div class="dtx">'+esc(node.t||'(untitled)')+'</div>');
   if(node.note)main.insertAdjacentHTML('beforeend','<div class="dcue">↳  '+esc(node.note)+'</div>');
   const mk=document.createElement('div');mk.className='dmk';const ef=E(node);const bits=[];
-  if(via.length)bits.push('<span class="dostep">next step</span>');
-  if(ef.urgent)bits.push('<span class="mk urg">⏱︎</span>');
+  const alone=!ef.imp&&!(lab&&lab.cls==='late')&&!node.repeat;
+  if(ef.urgent)bits.push('<span class="mk urg">⏱︎'+(alone?' urgent':'')+'</span>');
   if(ef.imp)bits.push('<span class="mk imp">Imp</span>');
   if(node.repeat&&isDone(node))bits.push('<span class="mk rep">next '+esc(label(nextRound(node)).txt)+'</span>');
   else if(lab&&lab.cls==='late')bits.push('<span class="mk late">'+esc(lab.txt)+'</span>');
@@ -1916,8 +2212,11 @@ function moveTo(node,target){
 const WDS={sun:0,sunday:0,mon:1,monday:1,tue:2,tues:2,tuesday:2,wed:3,weds:3,wednesday:3,
   thu:4,thur:4,thurs:4,thursday:4,fri:5,friday:5,sat:6,saturday:6};
 function parseDay(raw){
-  let t=raw.trim(),urgent=false,day=null,said='';
-  if(/!\s*$/.test(t)){urgent=true;t=t.replace(/\s*!+\s*$/,'')}
+  let t=raw.trim(),urgent=false,imp=false,day=null,said='';
+  for(let k=0;k<4;k++){
+    if(/!\s*$/.test(t)){urgent=true;t=t.replace(/\s*!+\s*$/,'');continue}
+    if(/(?:^|[\s!])\*+\s*$/.test(t)){imp=true;t=t.replace(/\s*\*+\s*$/,'');continue}
+    break}
   const m=t.match(/^(.*?\S)\s+(?:(?:on|by|this)\s+)?(today|tonight|tomorrow|tmrw|tmr|next week|weekend|sunday|sun|monday|mon|tuesday|tues|tue|wednesday|weds|wed|thursday|thurs|thur|thu|friday|fri|saturday|sat)$/i);
   if(m){
     const w=m[2].toLowerCase(),now=new Date(Date.now()).getDay();
@@ -1928,7 +2227,7 @@ function parseDay(raw){
     else{const k=WDS[w];day=(k-now+7)%7||7}
     t=m[1];said=w;
   }
-  return {text:t,day,urgent,said};
+  return {text:t,day,urgent,imp,said};
 }
 function quickAddEl(ph,defDay){
   const w=document.createElement('form');w.className='qadd';
@@ -1945,18 +2244,29 @@ function quickAddEl(ph,defDay){
   w.setAttribute('action','javascript:void 0');
   return w;
 }
+function inboxNode(){let ib=ROOT.kids.find(k=>k.inbox);
+  if(!ib){ib=nd('Inbox',[],{inbox:true});const sn=ordSnap(ROOT);ROOT.kids.unshift(ib);placeOrd(ROOT,ib,sn)}
+  return ib}
+let addOpen=false;
 function quickAdd(raw,defDay){
-  const p=parseDay(raw),S=here();
+  const p=parseDay(raw),S=here()===ROOT?inboxNode():here();
+  if(!p.text.trim()){p.text=raw.trim();p.day=null;p.urgent=false;p.imp=false}   /* "!" alone is a line, not an empty urgent one */
   const n=nd(p.text);
   if(p.day!=null)n.when=at(p.day);else if(defDay!=null)n.when=at(defDay);
   if(p.urgent)n.urgent=true;
-  const snap=ordSnap(S);S.kids.push(n);placeOrd(S,n,snap);
+  if(p.imp)n.imp=true;
+  const snap=ordSnap(S);if(S.inbox)S.kids.unshift(n);else S.kids.push(n);placeOrd(S,n,snap);
+  /* a line just added in Plan goes to the top of the box it lands in, and stays
+     out of the folded notes, until you leave Plan or this place */
+  if(mode==='plan'){if(freshZoom!==zoom){FRESH.clear();freshZoom=zoom}FRESH.add(n.id);freshFlash=n.id}
   save();render();
-  if(p.day!=null||p.urgent){
+  if(addOpen){}
+  else if(p.day!=null||p.urgent||p.imp){
+    const mk=[p.urgent&&'urgent',p.imp&&'important'].filter(Boolean).join(' and ');
     const what=(p.day!=null?'Planned for '+(p.day===0?'today':p.day===1?'tomorrow':longDay(n.when)):'')+
-      (p.urgent?(p.day!=null?', marked urgent':'Marked urgent'):'');
-    offerUndo(what+'.','Keep my words',()=>{n.t=raw.trim();n.when=defDay!=null?at(defDay):null;n.urgent=false;touch(n)});
-  }
+      (mk?(p.day!=null?', marked '+mk:'Marked '+mk):'');
+    offerUndo(what+(S.inbox?' In the Inbox.':'.'),'Keep my words',()=>{n.t=raw.trim();n.when=defDay!=null?at(defDay):null;n.urgent=false;n.imp=false;touch(n)});
+  }else offerUndo('Added to '+(S.inbox?'the Inbox':'\u201C'+short(S.t||'(untitled)')+'\u201D')+'.',()=>{const i=S.kids.indexOf(n);if(i>=0)S.kids.splice(i,1)});
   return n;
 }
 
@@ -1967,22 +2277,47 @@ function quickAdd(raw,defDay){
    ============================================================ */
 let planLens='week';
 let planTrayShut=null;   /* null: decide by screen width */
+let planNotesOpen=false;
+const HINT=(()=>{try{return JSON.parse(localStorage.getItem('yodo.hints')||'{}')}catch(e){return {}}})(),hintSeen=new Set();
+function hint(k){if(!hintSeen.has(k)){hintSeen.add(k);HINT[k]=(HINT[k]||0)+1;try{localStorage.setItem('yodo.hints',JSON.stringify(HINT))}catch(e){}}return HINT[k]<=4}
+const FRESH=new Set();let freshZoom=null,freshFlash=null;
+/* newest first, then the rest in their usual order */
+const freshFirst=a=>[...FRESH].reverse().map(id=>a.find(n=>n.id===id)).filter(Boolean).concat(a.filter(n=>!FRESH.has(n.id)));
+/* the folded group of notes at the foot of the tray (Week) or of Neither (Matrix) */
+function pNotes(c,S,l){
+  if(!c.notes||!c.notes.length)return;
+  const k=c.notes.length,b=document.createElement('button');b.className='pnotes';
+  b.setAttribute('aria-expanded',String(planNotesOpen));
+  b.innerHTML='<span class="pna">'+(planNotesOpen?'\u25BE':'\u25B8')+'</span>Notes<span class="n">'+k+'</span>'+
+    '<span class="pnw">'+(planNotesOpen?'Hide':'lines with no day and no mark')+'</span>';
+  b.onclick=()=>{planNotesOpen=!planNotesOpen;render()};
+  l.appendChild(b);
+  if(planNotesOpen)c.notes.forEach(n=>l.appendChild(pCard(n,S,true)));
+}
 function planScan(S,kind){
   const has=kind==='week'?n=>n.when!=null:n=>!!(n.urgent||n.imp);
-  const cards=[],tray=[];
+  /* ONE UNIT. A project with a day, a mark or a repeat is planned as one card,
+     in both layouts, and its parts travel inside it (the card lists them), just as
+     Do shows it by its next step. A part stands on its own only when it has its
+     own day (Week) or mark (Matrix). A line that asks nothing, under nothing that
+     does, is a note: notes fold away. */
+  const asks=n=>n.when!=null||n.urgent||n.imp||!!n.repeat;
+  const cards=[],tray=[],notes=[];
   (function w(x,covered){x.kids.forEach(k=>{
-    if(!k.kids.length){if(k.done)return;if(has(k))cards.push(k);else if(!covered)tray.push(k);return}
+    if(!k.kids.length){if(k.done)return;if(has(k))cards.push(k);
+      else if(!covered)(asks(k)||FRESH.has(k.id)?tray:notes).push(k);return}
     if(isDone(k))return;
-    const mk=has(k);if(mk)cards.push(k);
-    w(k,covered||mk);
+    const unit=asks(k);
+    if(has(k))cards.push(k);else if(unit&&!covered)tray.push(k);
+    w(k,covered||unit);
   })})(S,false);
-  return {cards,tray};
+  return {cards,tray,notes};
 }
 const byWeightP=(a,b)=>((!!(b.urgent&&b.imp))-(!!(a.urgent&&a.imp)))||(!!b.urgent-!!a.urgent)||(!!b.imp-!!a.imp);
 function planColumns(S){
-  const {cards,tray}=planScan(S,'week');
+  const {cards,tray,notes}=planScan(S,'week');
   const cols=[];
-  cols.push({key:'none',title:'No day yet',rail:true,items:tray.sort(byWeightP),drop:n=>{n.when=null},said:'no day'});
+  cols.push({key:'none',title:'No day yet',rail:true,items:tray.sort(byWeightP),notes,drop:n=>{n.when=null},said:'no day'});
   const late=cards.filter(n=>dayOff(n.when)<0);
   if(late.length)cols.push({key:'late',title:'Overdue',cls:'late',items:late.sort((a,b)=>a.when-b.when),
     drop:n=>{if(!(n.when!=null&&dayOff(n.when)<0))n.when=at(-1)},said:'overdue',action:'Move all to today'});
@@ -1999,7 +2334,7 @@ function planColumns(S){
   return cols;
 }
 function planCells(S){
-  const {cards,tray}=planScan(S,'matrix');
+  const {cards,tray,notes}=planScan(S,'matrix');
   const byDay=(a,b)=>(a.when||Infinity)-(b.when||Infinity);
   return [
     {key:'q1',title:'Urgent and important',why:'Do these first.',items:cards.filter(n=>n.urgent&&n.imp).sort(byDay),
@@ -2008,7 +2343,7 @@ function planCells(S){
       items:cards.filter(n=>!n.urgent&&n.imp).sort(byDay),drop:n=>{n.urgent=false;n.imp=true},said:'important'},
     {key:'q3',title:'Urgent',why:'Keep these small. Ask whether they really matter.',items:cards.filter(n=>n.urgent&&!n.imp).sort(byDay),
       drop:n=>{n.urgent=true;n.imp=false},said:'urgent'},
-    {key:'q4',title:'Neither',why:'Unmarked lines. Most can wait, or go.',items:tray.sort(byDay),
+    {key:'q4',title:'Neither',why:'Unmarked lines. Most can wait, or go.',items:tray.sort(byDay),notes,
       drop:n=>{n.urgent=false;n.imp=false},said:'neither'}
   ];
 }
@@ -2027,18 +2362,18 @@ function renderPlan(){
     b.onclick=()=>{planLens=k;save();render()};lens.appendChild(b)});
   bar.append(lens,placeChip());
   L.appendChild(bar);
-  L.insertAdjacentHTML('beforeend','<p class="plede">'+(planLens==='week'
+  if(hint('plan-'+planLens))L.insertAdjacentHTML('beforeend','<p class="plede">'+(planLens==='week'
     ?'Drag a line onto the day you will do it. Tap a line for the same choices without dragging.'
-    :'Drag a line into a box to mark it. Tap a line for the same choices without dragging.')+'</p>');
-  L.appendChild(quickAddEl(planLens==='week'?'Add a line… try “call mum fri”':'Add a line…',null));
+    :'Drag a line into a box to mark it, or tap it for the same choices. End a new line with ! for urgent, * for important.')+'</p>');
+  if(!S.kids.length&&S!==ROOT){L.appendChild(leafHere(S));return}
   if(planLens==='matrix'){
-    planCols=planCells(S);
+    planCols=planCells(S);planCols.forEach(c=>c.items=freshFirst(c.items));
     const m=document.createElement('div');m.className='pmatrix';
     planCols.forEach(c=>m.appendChild(pQuad(c,S)));
     L.appendChild(m);
   }else{
     const cols=planColumns(S);
-    planCols=cols.concat(...cols.filter(c=>c.slots).map(c=>c.slots));
+    planCols=cols.concat(...cols.filter(c=>c.slots).map(c=>c.slots));planCols.forEach(c=>c.items=freshFirst(c.items));
     const b=document.createElement('div');b.className='pboard';b.id='pboard';
     cols.forEach(c=>b.appendChild(pCol(c,S)));
     L.appendChild(b);
@@ -2051,6 +2386,8 @@ function renderPlan(){
     c.setAttribute('aria-label','Untick '+n.t);c.onclick=()=>{finish(n);render();offerUndo('Back on the list.',()=>{if(!n.done)finish(n)})};
     done.appendChild(c)});
   L.appendChild(done);
+  if(freshFlash){const c=L.querySelector('.pcard[data-id="'+freshFlash+'"]');freshFlash=null;
+    if(c){c.classList.add('flash');try{c.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}}
 }
 function pHead(c){
   return '<div class="ph"><h2>'+esc(c.title)+'</h2>'+(c.sub?'<span class="d">'+esc(c.sub)+'</span>':'')+
@@ -2061,6 +2398,7 @@ function pCol(c,S){
   el.className='pcol '+(c.cls||'')+(c.rail?' rail':'')+(c.slots?' slotted':'');
   if(c.drop)el.dataset.drop=c.key;el.setAttribute('aria-label',c.title);
   el.innerHTML=pHead(c);
+  if(c.rail&&planTrayShut&&c.notes&&c.notes.length)el.querySelector('.ph h2').insertAdjacentHTML('afterend','<span class="d">+ '+c.notes.length+' note'+(c.notes.length===1?'':'s')+'</span>');
   if(c.slots){
     c.slots.forEach(sl=>{
       const z=document.createElement('div');z.className='pslot';z.dataset.drop=sl.key;z.setAttribute('aria-label',sl.said);
@@ -2075,30 +2413,35 @@ function pCol(c,S){
     const t=document.createElement('button');t.className='ptoggle';t.setAttribute('aria-expanded',String(!planTrayShut));
     t.textContent=planTrayShut?'Show':'Hide';t.onclick=()=>{planTrayShut=!planTrayShut;render()};
     el.querySelector('.ph').appendChild(t);
-    if(planTrayShut){el.classList.add('shut');return el}
+    if(planTrayShut){el.classList.add('tray-folded');return el}   /* not 'shut': Map's close button owns that name */
   }
   if(c.action&&c.items.length){const a=document.createElement('button');a.className='pact';a.textContent=c.action;
     a.onclick=()=>{const was=c.items.map(n=>[n,n.when]);c.items.forEach(n=>{n.when=at(0);touch(n)});save();render();
       offerUndo(was.length+' moved to today.',()=>was.forEach(([n,w])=>{n.when=w;touch(n)}))};el.appendChild(a)}
   const l=document.createElement('div');l.className='pcards';
-  if(!c.items.length)l.innerHTML='<div class="pempty">'+(c.key==='d0'?'Nothing planned. Drag something here.':c.rail?'Every line has a day.':'Free')+'</div>';
+  const nn=c.notes?c.notes.length:0;
+  if(!c.items.length)l.innerHTML='<div class="pempty">'+(c.key==='d0'?'Nothing planned. Drag something here.':
+    c.rail?(nn?'Nothing here is waiting for a day.':stats(S).total?'Every line here has a day.':'Nothing written here yet. Add a line above.'):'Free')+'</div>';
   c.items.forEach((n,i)=>{if(c.limit&&i===c.limit)l.insertAdjacentHTML('beforeend','<div class="plimit">a full day</div>');
     l.appendChild(pCard(n,S,c.rail))});
+  pNotes(c,S,l);
   el.appendChild(l);return el;
 }
 function pQuad(c,S){
   const el=document.createElement('section');el.className='pquad '+c.key;el.dataset.drop=c.key;el.setAttribute('aria-label',c.title);
-  el.innerHTML=pHead(c)+'<div class="pwhy">'+esc(c.why)+'</div>';
+  el.innerHTML=pHead(c)+(c.items.length||(c.notes&&c.notes.length)?'':'<div class="pwhy">'+esc(c.why)+'</div>');
   const l=document.createElement('div');l.className='pcards';
-  if(!c.items.length)l.innerHTML='<div class="pempty">Nothing here</div>';
+  if(!c.items.length&&!(c.notes&&c.notes.length))l.innerHTML='<div class="pempty">Nothing here</div>';
   c.items.forEach(n=>l.appendChild(pCard(n,S)));
+  pNotes(c,S,l);
   el.appendChild(l);return el;
 }
 function pCard(n,S,compact){
-  const el=document.createElement('div');el.className='pcard'+(compact?' compact':'')+(n.kids.length?' proj':'');
+  const el=document.createElement('div');el.className='pcard'+(compact?' compact':'')+(n.kids.length?' proj':'')+(FRESH.has(n.id)?' fresh':'');
   el.tabIndex=0;el.dataset.id=n.id;el.setAttribute('aria-label',(n.t||'(untitled)')+'. Press Enter for choices.');
   const cr=ancFrom(n.id,S).map(a=>a.t).join(' › ');
   const m=[];
+  if(FRESH.has(n.id))m.push('<span class="mk new">new</span>');
   if(n.kids.length){const st=stats(n);m.push('<span class="mk soft">'+(st.total-st.done)+' part'+(st.total-st.done===1?'':'s')+' open</span>')}
   if(n.urgent&&planLens!=='matrix')m.push('<span class="mk urg">⏱︎ urgent</span>');
   if(n.imp&&planLens!=='matrix')m.push('<span class="mk imp">Imp</span>');
@@ -2108,6 +2451,16 @@ function pCard(n,S,compact){
   el.innerHTML='<button class="ptick" aria-label="Finish '+esc(n.t)+'"></button><div class="ptx">'+
     (cr?'<div class="pcr">'+esc(cr)+'</div>':'')+'<div class="pt">'+esc(n.t||'(untitled)')+'</div>'+
     (n.note?'<div class="pcue">↳ '+esc(n.note)+'</div>':'')+(m.length?'<div class="pmk">'+m.join('')+'</div>':'')+'</div>';
+  if(n.kids.length){
+    const open=[];(function w(x){x.kids.forEach(k=>{if(k.kids.length)w(k);else if(!k.done)open.push(k)})})(n);
+    const box=document.createElement('div');box.className='pparts';
+    open.slice(0,6).forEach(k=>{const b=document.createElement('button');b.className='ppart';
+      b.textContent=(k.t||'(untitled)')+(k.when!=null?' \u00b7 '+label(k.when).txt:'')+(k.urgent?' \u00b7 \u23F1\uFE0E':'')+(k.imp?' \u00b7 Imp':'');
+      b.setAttribute('aria-label','Choices for '+(k.t||'untitled'));
+      b.onclick=ev=>{ev.stopPropagation();lineActions(k,'plan')};box.appendChild(b)});
+    if(open.length>6)box.insertAdjacentHTML('beforeend','<span class="pmore">and '+(open.length-6)+' more</span>');
+    el.querySelector('.ptx').appendChild(box);
+  }
   el.querySelector('.ptick').onclick=e=>{e.stopPropagation();const was=isDone(n);finish(n);render();
     if(!n.kids.length&&!was&&isDone(n)&&!n.repeat)offerUndo('Done. “'+short(n.t)+'”',()=>{if(isDone(n))finish(n)})};
   el.addEventListener('keydown',e=>{if(e.target===el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();lineActions(n,'plan')}});
@@ -2128,7 +2481,7 @@ const scroller=()=>{const m=document.querySelector('main');
 const punlock=()=>document.documentElement.classList.remove('plock');
 function pDragify(el,n){
   el.addEventListener('pointerdown',e=>{
-    if(e.button!==0||e.target.closest('.ptick'))return;
+    if(e.button!==0||e.target.closest('.ptick')||e.target.closest('.ppart'))return;
     const st={el,n,x0:e.clientX,y0:e.clientY,live:false,id:e.pointerId,touch:e.pointerType==='touch',armed:e.pointerType!=='touch',
       sc:scroller()};   /* found now: the lock below hides the scroller's overflow */
     if(st.touch)st.timer=setTimeout(()=>{st.armed=true;el.classList.add('armed');
@@ -2170,7 +2523,7 @@ window.addEventListener('pointerup',e=>{
   d.g.remove();d.el.classList.remove('dragging');
   document.querySelectorAll('.pover').forEach(z=>z.classList.remove('pover'));
   const c=d.zone&&planCols.find(x=>x.key===d.zone.dataset.drop);
-  if(c&&c.drop&&!c.items.includes(d.n))pDrop(d.n,c);
+  if(c&&c.drop&&!c.items.includes(d.n)&&!(c.notes||[]).includes(d.n))pDrop(d.n,c);
 });
 window.addEventListener('pointercancel',()=>{punlock();if(!pdrag)return;clearTimeout(pdrag.timer);clearInterval(pdrag.auto);
   if(pdrag.g)pdrag.g.remove();pdrag.el.classList.remove('dragging','armed');pdrag=null;
@@ -2275,7 +2628,91 @@ function sheetHead(title){
   return '<div class="shead"><div class="grip"></div><div class="srow"><h3>'+title+'</h3>'+
          '<button class="sx" data-shut aria-label="Close">&#10005;</button></div></div>';
 }
-function shutSheet(){sheet.classList.remove('on')}
+function shutSheet(){sheet.classList.remove('on');sin.classList.remove('tall');addOpen=false}
+function openAdd(){
+  const inDo=mode==='do';let today=inDo;
+  const dest=()=>here()===ROOT?'the Inbox':'\u201C'+(here().t||'(untitled)')+'\u201D';
+  sin.classList.remove('tall');sin.innerHTML=sheetHead('New line');addOpen=true;
+  const f=document.createElement('form');f.className='addf';f.setAttribute('action','javascript:void 0');
+  f.innerHTML='<input type="text" autocomplete="off" enterkeyhint="done" placeholder="Write it down\u2026" aria-label="New line">'+
+    '<button type="submit" class="go big">Add</button>';
+  const meta=document.createElement('div');meta.className='addmeta';
+  const paint=()=>{meta.innerHTML='<span>Goes to <b>'+esc(dest())+'</b></span>'+
+    (inDo?'<button type="button" class="chip'+(today?' on':'')+'" aria-pressed="'+today+'">for today</button>':'')+
+    '<span class="addhint">End with a day (fri, tomorrow), ! for urgent, * for important.</span>';
+    const c=meta.querySelector('.chip');if(c)c.onclick=()=>{today=!today;paint()}};
+  paint();
+  const log=document.createElement('div');log.className='addlog';
+  f.onsubmit=e=>{e.preventDefault();const i=f.querySelector('input');if(!i.value.trim())return;
+    const raw=i.value.trim(),def=today?0:null,n=quickAdd(i.value,def);i.value='';
+    const guessed=n.t!==raw;   /* a day or a mark was read from the words */
+    const bits=[n.when!=null?label(n.when).txt:'',n.urgent?'\u23F1\uFE0E urgent':'',n.imp?'Imp':''].filter(Boolean);
+    const row=document.createElement('div');row.className='addrow';
+    row.innerHTML='<span class="ok">\u2713</span><span class="at">'+esc(n.t)+(bits.length?' <i>\u00b7 '+esc(bits.join(' \u00b7 '))+'</i>':'')+'</span>';
+    const u=document.createElement('button');u.type='button';u.className='addundo';
+    u.textContent=guessed?'Keep my words':'Undo';
+    u.onclick=()=>{
+      if(guessed){n.t=raw;n.when=def!=null?at(def):null;n.urgent=false;n.imp=false;touch(n);save();render();
+        row.querySelector('.at').textContent=raw;u.remove();return}
+      const g=find(n.id);if(g){g.parent.kids.splice(g.parent.kids.indexOf(n),1);FRESH.delete(n.id);save();render()}
+      row.classList.add('undone');u.remove()};
+    row.appendChild(u);log.prepend(row);i.focus()};
+  sin.append(f,meta,log);sheet.classList.add('on');setTimeout(()=>{const i=f.querySelector('input');if(i)i.focus()},60);
+}
+const hl=(s,q)=>{if(!q)return esc(s);const i=s.toLowerCase().indexOf(q);if(i<0)return esc(s);
+  return esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length))};
+function openFind(){
+  sin.innerHTML='';sin.classList.add('tall');
+  const box=document.createElement('div');box.className='findbox';
+  box.innerHTML='<div class="findrow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg><input type="search" placeholder="Find a line or a place" autocomplete="off" enterkeyhint="search" aria-label="Find">'+
+    '<button class="sx" data-shut aria-label="Close">&#10005;</button></div><div class="findres"></div>';
+  sin.appendChild(box);sheet.classList.add('on');
+  const inp=box.querySelector('input'),res=box.querySelector('.findres');
+  const all=[];(function w(x,tr){x.kids.forEach(k=>{all.push({n:k,tr});w(k,tr.concat(k.t||'(untitled)'))})})(ROOT,[]);
+  const show=()=>{const q=inp.value.trim().toLowerCase();let list;
+    if(!q){list=all.filter(a=>!a.n.done&&a.n.t).sort((a,b)=>(b.n.touched||0)-(a.n.touched||0)).slice(0,8);
+      res.innerHTML=list.length?'<div class="findlbl">Recent</div>':''}
+    else{list=all.map(a=>{const t=(a.n.t||'').toLowerCase(),c=(a.n.note||'').toLowerCase(),i=t.indexOf(q);
+        return [i===0?0:i>0?1:c.includes(q)?2:-1,a]}).filter(x=>x[0]>=0)
+        .sort((x,y)=>x[0]-y[0]||(x[1].n.done-y[1].n.done)).slice(0,40).map(x=>x[1]);
+      res.innerHTML=list.length?'':'<div class="findnone">Nothing here says \u201C'+esc(inp.value.trim())+'\u201D.</div>'}
+    list.forEach(a=>{const b=document.createElement('button');b.className='findhit'+(a.n.done?' done':'');
+      b.innerHTML=(a.tr.length?'<span class="fcr">'+esc(a.tr.join(' \u203A '))+'</span>':'')+
+        '<span class="ft">'+hl(a.n.t||'(untitled)',q)+(a.n.kids.length?' <i>\u00b7 '+a.n.kids.length+'</i>':'')+'</span>'+
+        (a.n.note?'<span class="fcue">\u21B3 '+hl(a.n.note,q)+'</span>':'');
+      b.onclick=()=>reveal(a.n);res.appendChild(b)})};
+  inp.oninput=show;
+  inp.onkeydown=e=>{if(e.key==='Enter'){const h=res.querySelector('.findhit');if(h)h.click()}else if(e.key==='Escape')shutSheet()};
+  show();setTimeout(()=>inp.focus(),60);
+}
+/* show a found line where it lives: a place is stepped into; a line is opened, lit, in its place */
+function reveal(n){shutSheet();const f=find(n.id);if(!f)return;
+  if(n.kids.length){mode='map';goTo(n.id);return}
+  let a=f.parent;while(a&&a!==ROOT){a.collapsed=false;const g=find(a.id);a=g&&g.parent}
+  mode='map';goTo(f.parent?f.parent.id:ROOT.id);openId=n.id;render();
+  const el=document.querySelector('.t[data-id="'+n.id+'"]');
+  if(el){const row=el.closest('.row');row.classList.add('found');el.scrollIntoView({block:'center'})}}
+document.getElementById('find').onclick=openFind;
+document.getElementById('addb').onclick=openAdd;
+document.addEventListener('keydown',e=>{
+  const t=e.target,typing=t.closest&&t.closest('input,textarea,[contenteditable="true"]');
+  if(sheet.classList.contains('on'))return;
+  /* no single-letter shortcut for adding: typing with nothing focused must never pop a sheet open */
+  if(((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')||(!typing&&!e.ctrlKey&&!e.metaKey&&e.key==='/')){e.preventDefault();openFind()}});
+/* the page title shrinks into the header once you scroll past it */
+let hdrRaf=0;
+function hdr(){const m=document.querySelector('main');if(!m)return;
+  /* phones scroll the page panel; laptops scroll the window */
+  const y=Math.max(m.scrollTop,window.scrollY||0),p=Math.max(0,Math.min(1,y/72));
+  const R=document.documentElement.style,t=document.querySelector('.top'),h=document.getElementById('title');
+  R.setProperty('--hp',p.toFixed(3));
+  /* the title pins just under the header and shrinks there; the header's frost reaches down to cover it */
+  if(t&&h){const flat=document.body.classList.contains('flat')&&matchMedia('(max-width:760px)').matches;
+    R.setProperty('--toph',t.offsetHeight+'px');R.setProperty('--bandx',flat?'0px':(h.offsetHeight*(1-.38*p)+10)+'px')}
+  document.querySelector('.top').classList.toggle('scrolled',p>=1)}
+const hdrSoon=()=>{if(!hdrRaf)hdrRaf=requestAnimationFrame(()=>{hdrRaf=0;hdr()})};
+document.querySelector('main').addEventListener('scroll',hdrSoon,{passive:true});
+window.addEventListener('scroll',hdrSoon,{passive:true});
 sin.addEventListener('click',e=>{if(e.target.closest('[data-shut]'))shutSheet()});
 
 function datePick(node){
@@ -2423,7 +2860,7 @@ function repeatPick(node){
   }
   sheet.classList.add('on');
 }
-sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('on')};
+sheet.onclick=e=>{if(e.target===sheet)shutSheet()};
 
 /* ---------- look ---------- */
 document.getElementById('gear').onclick=()=>{
@@ -2438,9 +2875,24 @@ document.getElementById('gear').onclick=()=>{
     sin.appendChild(o)};
   row('Paper',[['Warm','paper'],['Cool','light'],['Dark','dark']],
     ()=>document.body.dataset.theme,v=>document.body.dataset.theme=v);
-  row('Text size',[['Small',.92],['Normal',1],['Large',1.12]],
-    ()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs')||1),
-    v=>document.documentElement.style.setProperty('--fs',v));
+  /* text size: eight even steps, applied as the slider moves */
+  { const ST=[.85,.92,1,1.06,1.12,1.2,1.3,1.4];
+    const cur=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs')||1)||1;
+    let i=ST.reduce((b,v,k)=>Math.abs(v-cur)<Math.abs(ST[b]-cur)?k:b,2);
+    const lab=document.createElement('div');lab.className='lbl sub';lab.innerHTML='Text size <span class="fsv"></span>';
+    sin.appendChild(lab);
+    const o=document.createElement('div');o.className='fsrow';
+    o.innerHTML='<button class="opt fsdn" aria-label="Smaller text">A</button>'+
+      '<input type="range" min="0" max="'+(ST.length-1)+'" step="1" aria-label="Text size">'+
+      '<button class="opt fsup" aria-label="Larger text">A</button>';
+    const r=o.querySelector('input');
+    const show=()=>{r.value=i;const p=Math.round(ST[i]*100);lab.querySelector('.fsv').textContent=p===100?'100% (normal)':p+'%';
+      r.setAttribute('aria-valuetext',p+' percent');document.documentElement.style.setProperty('--fs',ST[i])};
+    r.oninput=()=>{i=+r.value;show()};r.onchange=()=>save();
+    o.querySelector('.fsdn').onclick=()=>{if(i>0){i--;show();save()}};
+    o.querySelector('.fsup').onclick=()=>{if(i<ST.length-1){i++;show();save()}};
+    sin.appendChild(o);show();
+  }
   row('Typeface',[['Sans',"'Instrument Sans'"],['Serif',"'Newsreader'"]],
     ()=>getComputedStyle(document.documentElement).getPropertyValue('--ff').trim(),
     v=>{document.documentElement.style.setProperty('--ff',v);save()});
@@ -2454,7 +2906,8 @@ document.getElementById('gear').onclick=()=>{
       b.onclick=ev=>{ev.stopPropagation();keepDone=v;save();render();document.getElementById('gear').click()};
       o.appendChild(b)});
     sin.appendChild(o);
-    const o2=document.createElement('div');o2.className='opts';o2.style.marginTop='7px';
+    sin.insertAdjacentHTML('beforeend','<div class="lbl sub">When you finish one</div>');
+    const o2=document.createElement('div');o2.className='opts';
     [['Say something',true],['Stay quiet',false]].forEach(([l,v])=>{
       const b=document.createElement('button');b.className='opt';b.textContent=l;
       b.setAttribute('aria-pressed',cheer===v);
@@ -2626,14 +3079,15 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 24</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 29</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
 };
 
 document.addEventListener('keydown',e=>{
-  if((e.key==='z'||e.key==='Z')&&(e.metaKey||e.ctrlKey)&&!e.shiftKey&&undoFn){
+  if((e.key==='z'||e.key==='Z')&&(e.metaKey||e.ctrlKey)&&!e.shiftKey&&undoFn
+     &&!(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName))){
     e.preventDefault();undoFn();undoFn=null;
     document.getElementById('undo').classList.remove('on');render();
   }
@@ -2674,7 +3128,7 @@ const SLIDES=[
   {m:'\u21C4', h:'Three ways to look',
    p:'<b>Map</b> is for thinking \u2014 nesting, moving, breaking things down. '+
      '<b>Plan</b> is for deciding when: drag lines onto days. <b>Do</b> is today, and nothing else. '+
-     'Tap the switch at the top, or <b>swipe sideways</b>.'},
+     'Tap <b>Map</b>, <b>Plan</b> or <b>Do</b>, or <b>swipe sideways</b>. The round button adds a line from anywhere.'},
   {m:'\u23F1', h:'Then just do things',
    p:'Give a line a day, or mark it <b>\u23F1 urgent</b> or <b>Imp</b>ortant. Today\u2019s lines turn up '+
      'in <b>Do</b> \u2014 with one thing at the top, and why it was chosen.'},
