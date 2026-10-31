@@ -214,7 +214,11 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .row.late .t{color:var(--late)}
 
 .note{padding:0 44px 0 var(--textx);margin-top:0;font-size:calc(12.5px*var(--fs));color:var(--faint);
-  line-height:1.4;outline:none;max-width:52ch;overflow-wrap:anywhere}
+  line-height:1.45;outline:none;max-width:68ch;overflow-wrap:anywhere;white-space:pre-wrap}
+/* a long note rests as its first lines; open the line to see and edit all of it */
+.note:not(.edit):not(:empty){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+/* a note's later lines hang under its first, not under the arrow */
+.note{padding-left:calc(var(--textx) + 1.25em);text-indent:-1.25em}
 /* a line that carries a cue gives up its own bottom padding, so the cue sits
    close to its parent — but never close to the marks that wrapped above it. */
 .hasnote>.row{padding-bottom:1px}
@@ -224,7 +228,7 @@ h1{font-family:var(--fd),Georgia,serif;font-variation-settings:'SOFT' 55,'WONK' 
 .note:empty{display:none}
 .note[data-ph]:empty{display:block}
 .note[data-ph]:empty{font-size:calc(15px*var(--fs));color:var(--dim)}
-.note[data-ph]:empty::before{content:'where will you be when you do this?';color:var(--dim)}
+.note[data-ph]:empty::before{content:'a note \2014  or where you\2019 ll be when you do this';color:var(--dim)}
 .note::before{content:'\21B3\00a0\00a0';color:var(--faint)}
 
 .note.edit{color:var(--ink)}
@@ -840,7 +844,7 @@ body:has(.sheet.on) #undo{bottom:auto;top:calc(env(safe-area-inset-top) + 12px)}
    Plan reads like Map and Do: flat rows under section headings, hairlines, no boxes.
    A laptop gives it a slightly wider column: Week keeps "No day yet" beside the days
    (a short sideways drag), Matrix keeps its 2x2. A phone gives one column. */
-body.wide main>:not(.top),body.wide .bar2{max-width:820px;margin-left:auto;margin-right:auto;width:100%}
+body.wide main>:not(.top),body.wide .bar2{max-width:596px;margin-left:auto;margin-right:auto;width:100%}   /* the same column as Map and Do */
 .pcol,.pquad,.pcol.focus,.pquad.q1,.pcol.rail,.pcol.slotted{background:transparent;border:none;box-shadow:none;border-radius:0;padding:0;
   flex:none;width:auto;min-width:0;max-width:none;min-height:0}
 .pboard{display:flex;flex-direction:column;gap:var(--s4);overflow:visible;margin-top:var(--s4);padding-bottom:0}
@@ -875,6 +879,77 @@ body.wide main>:not(.top),body.wide .bar2{max-width:820px;margin-left:auto;margi
   .pquad .pcards{grid-template-columns:1fr}
 }
 @media (max-width:760px){.pmatrix{grid-template-columns:1fr;gap:var(--s4)}.pquad .pcards{grid-template-columns:1fr;max-height:none}}
+
+/* ============ ON A COMPUTER (alpha 34) ============ */
+/* (body.desk is set in code: a mouse, and room. Some browsers report no pointer at all.) */
+/* adding is a box at the top of Do and Plan, not a trip to the corner */
+body.desk #addb{display:none}
+/* dialogs sit in the middle of the screen, whole, not risen from the bottom edge */
+body.desk .sheet{align-items:center}
+body.desk .sin{border-radius:var(--r3);max-height:min(82vh,760px);padding-bottom:var(--s5);animation:pop .22s var(--ease)}
+body.desk .sin .grip{display:none}
+body.desk .shead{border-radius:var(--r3) var(--r3) 0 0}
+/* a line you can click shows that you can */
+body.desk .row:hover{background:color-mix(in srgb,var(--ink) 3.5%,transparent);border-radius:var(--r1)}
+body.desk .t[contenteditable="false"]{cursor:text}
+/* Matrix: flat rows need no equal heights (that only made empty slabs) */
+body.desk .pmatrix{grid-auto-rows:auto;align-items:start}
+body.desk .pquad{min-height:0}
+body.desk .pquad .pcards{max-height:none}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+#planlist .qadd,#dolist .qadd{margin:var(--s3) 0 var(--s2)}
+/* the search result chosen with the arrow keys */
+.findhit.sel{background:var(--hair)}
+/* Notes: a section with its own heading */
+.pnotes{border-top:1px solid var(--hair);margin-top:var(--s4);padding:var(--s3) 0 var(--s2);min-height:44px;align-items:baseline}
+.pnotes .pnt{font-family:var(--ff),system-ui,sans-serif;font-weight:600;font-size:calc(15px*var(--fs));color:var(--ink)}
+.pnotes .pnw{color:var(--acc-t)}
+.pnmore{color:var(--acc-t);font-size:calc(13px*var(--fs));padding:8px 4px;min-height:36px;text-align:left}
+
+/* ============ A COMPUTER-FIRST MAP (alpha 35) ============ */
+/* the open line's small tools, where its marks were */
+.marks.tools{gap:1px;flex-wrap:nowrap;flex:none}
+.main:has(.marks.tools)>.t{min-width:0}
+.marks.tools .tb{height:28px;min-width:28px;padding:0 7px;border-radius:var(--r1);display:inline-flex;align-items:center;gap:5px;
+  font-size:calc(12px*var(--fs));color:var(--faint);background:transparent;white-space:nowrap}
+.marks.tools .tb:hover{background:var(--hair);color:var(--ink)}
+.marks.tools .tb.on{color:var(--acc-t);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.marks.tools .tb.urg.on{color:var(--late);background:color-mix(in srgb,var(--late) 12%,transparent)}
+.marks.tools .tb.imp.on{color:var(--imp);background:color-mix(in srgb,var(--imp) 14%,transparent)}
+.marks.tools .tb svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.marks.tools .tb.bin:hover{color:var(--late);background:color-mix(in srgb,var(--late) 12%,transparent)}
+.marks.tools .tb.mv{color:var(--dim)}
+/* the grip: drag a line to move it */
+body.desk .row{position:relative}
+.grip{position:absolute;left:-24px;top:50%;transform:translateY(-50%);width:14px;height:22px;display:grid;
+  grid-template-columns:repeat(2,4px);gap:3px 3px;align-content:center;justify-content:center;cursor:grab;opacity:0;transition:opacity .15s;border-radius:4px}
+.grip i{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.row:hover>.grip{opacity:.8}
+.grip:hover{background:var(--hair)}
+body.mdragging,body.mdragging *{cursor:grabbing!important;user-select:none}
+/* while anything is being carried, the undo note steps aside: it must never stand in for a drop place */
+body.mdragging #undo,body:has(.pghost) #undo,body:has(.lifting) #undo{pointer-events:none;opacity:.25}
+.mlift>.row{opacity:.4}
+.mind{position:fixed;height:2px;background:var(--acc);border-radius:2px;z-index:90;pointer-events:none;display:none}
+.mind::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--acc)}
+
+/* ============ WEEK: overdue left, days centre, no day right (alpha 35) ============ */
+.pboard,body.desk .pboard{display:flex;flex-direction:column;align-items:stretch;gap:var(--s4)}
+.pleft:empty,.pright:empty{display:none}
+.pboard>.pleft>.pcol,.pboard>.pright>.pcol{width:auto}
+.pboard>.pright>.pcol.rail,body.desk .pboard>.pright>.pcol.rail{position:static;flex:none;width:auto;max-height:none;overflow:visible}
+.pdays+.pright,.pleft+.pdays{border-top:1px solid var(--hair);padding-top:var(--s3)}
+.pleft+.pdays>.pcol.focus:first-child{border-top:none}
+@media (min-width:1200px){
+  body.desk .pboard{display:grid;grid-template-columns:220px 596px 252px;column-gap:30px;width:1128px;max-width:none;
+    margin-left:calc((100% - 1128px)/2);align-items:start}
+  body.desk .pleft{grid-column:1;grid-row:1;position:sticky;top:calc(var(--toph,72px) + var(--bandx,0px) + 8px)}
+  body.desk .pdays{grid-column:2;grid-row:1}
+  body.desk .pright{grid-column:3;grid-row:1;position:sticky;top:calc(var(--toph,72px) + var(--bandx,0px) + 8px);
+    max-height:calc(100vh - var(--toph,72px) - var(--bandx,0px) - 24px);overflow-y:auto;overscroll-behavior:contain}
+  body.desk .pdays+.pright,body.desk .pleft+.pdays{border-top:none;padding-top:0}
+  body.desk .pleft .pcol.late .ph h2{color:var(--late)}
+}
 </style>
 </head>
 <body data-theme="paper">
@@ -1446,8 +1521,10 @@ function howTo(){
     HINT.howto=el.open?'open':'shut';try{localStorage.setItem('yodo.hints',JSON.stringify(HINT))}catch(e){}};
 }
 let lastFace=null,lastOpenId=null;
+const deskMark=()=>document.body.classList.toggle('desk',desk());
+window.addEventListener('resize',deskMark);
 function render(){
-  renderDay=dayStart(Date.now());
+  renderDay=dayStart(Date.now());deskMark();
   if(openId&&openId!==lastOpenId&&mode==='map')requestAnimationFrame(()=>{const c=document.querySelector('.ctl');
     if(c)try{c.scrollIntoView({block:'nearest'})}catch(e){}});
   lastOpenId=openId;
@@ -1510,8 +1587,11 @@ function kidsEl(parent,depth){
 function rowEl(node,parent,depth){
   const wrap=document.createElement('div');
   const s=stats(node),has=node.kids.length>0;
+  /* the note under a line: always shown when there is one; an empty one is offered
+     when a phone opens the line, and on a computer only when you ask (Shift+Enter, or ✎) */
+  const showNote=!!node.note||(openId===node.id&&(!desk()||noteFor===node.id));
   wrap.className='d'+Math.min(depth,4)+(has?' holds':'')+(isDone(node)?' done':'')+
-    ((node.note||openId===node.id)?' hasnote':'');
+    (showNote?' hasnote':'');
 
   const lab=isDone(node)?null:label(node.when);
   const r=document.createElement('div');
@@ -1541,12 +1621,15 @@ function rowEl(node,parent,depth){
   tx.onclick=e=>{
     if(openId!==node.id){
       e.preventDefault();openId=node.id;render();
-      /* nothing written yet? then you meant to write. skip the second tap. */
-      if(!node.t)focus(node.id);
+      /* with a mouse, one click is for writing: the caret lands where you clicked.
+         on a touch screen the first tap shows the tools and the keyboard waits;
+         an empty line is for writing either way. */
+      if(!node.t||!coarse())focusAt(node.id,e.clientX,e.clientY);
     }
   };
-  tx.oninput=()=>{node.t=tx.textContent;touch(node);saveSoon()};
-  tx.onpaste=e=>pasteInto(e,tx,node,parent);
+  tx.oninput=()=>{node.t=tx.textContent;touch(node);saveSoon();document.getElementById('undo').classList.remove('on')};
+  /* only a line open for writing takes a paste; otherwise it goes to the page (once) */
+  tx.onpaste=e=>{if(tx.isContentEditable)pasteInto(e,tx,node,parent)};
   tx.onkeydown=e=>key(e,node,parent);
 
   const m=document.createElement('div');m.className='marks';
@@ -1564,6 +1647,24 @@ function rowEl(node,parent,depth){
     :node.repeat==='monthly'&&node.rDate!=null?('the '+node.rDate)
     :node.repeat)}</span>`);
   m.innerHTML=marks.slice(0,2).join('');
+  /* a computer: the open line's tools sit where its marks were, small, and nothing moves.
+     Tab, Shift+Tab and Alt+Shift+↑/↓ (or a drag) do the moving. */
+  if(desk()&&openId===node.id){
+    m.className='marks tools';m.innerHTML='';
+    const tb=(html,lbl,on,fn,cls)=>{const b=document.createElement('button');b.className='tb'+(on?' on':'')+(cls?' '+cls:'');b.innerHTML=html;
+      b.title=lbl;b.setAttribute('aria-label',lbl);b.onmousedown=ev=>ev.preventDefault();
+      b.onclick=ev=>{ev.stopPropagation();fn()};m.appendChild(b)};
+    const CAL='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>';
+    tb('\u270E','Note (Shift+Enter)',!!node.note,()=>{noteFor=node.id;render();focusNote(node.id)});
+    tb('\u23F1\uFE0E','Urgent',node.urgent,()=>{node.urgent=!node.urgent;unpinIfBare(node);touch(node);render();focus(node.id);if(node.urgent)nudgeCue(node)},'urg');
+    tb('Imp','Important',node.imp,()=>{node.imp=!node.imp;unpinIfBare(node);touch(node);render();focus(node.id);if(node.imp)nudgeCue(node)},'imp');
+    tb(CAL+(lab?'<span>'+esc(lab.txt)+'</span>':''),'When',node.when!=null,()=>datePick(node),'when');
+    tb('\u21BB','Repeats',!!node.repeat,()=>repeatPick(node));
+    tb(swatch(node),'Colour',!!node.hue,()=>huePick(node));
+    tb('<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8h7.5M6.5 5.2 9.3 8l-2.8 2.8M9.5 3.5h4.5v9h-4.5"/></svg>','Move to\u2026 (any place)',false,()=>movePick(node),'mv');
+    tb('<svg class="bin-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M6.5 4V2.6h3V4M4 4l.7 9.2c.05.7.6 1.3 1.3 1.3h4c.7 0 1.25-.6 1.3-1.3L12 4M6.6 6.8v5M9.4 6.8v5"/></svg>','Delete (Ctrl+Shift+Backspace)',false,
+      ()=>{const k=removeLine(node,parent);openId=null;render();if(k)offerUndo('Deleted \u201C'+short(node.t)+'\u201D.',()=>{restoreLine(k.key)})},'bin');
+  }
 
   /* EVERY row gets a way in */
   const into=document.createElement('button');
@@ -1582,24 +1683,33 @@ function rowEl(node,parent,depth){
   const main=document.createElement('div');main.className='main';
   main.append(tx,m);
   r.append(car,tick,main,into);
+  if(desk()){const g=document.createElement('span');g.className='grip';g.title='Drag to move';g.setAttribute('aria-hidden','true');
+    g.innerHTML='<i></i><i></i><i></i><i></i><i></i><i></i>';g.addEventListener('pointerdown',ev=>mapDragStart(ev,node,wrap));r.appendChild(g)}
   wrap.appendChild(r);
 
-  if(node.note||openId===node.id){
+  if(showNote){
     const nt=document.createElement('div');
     nt.className='note'+(openId===node.id?' edit':'');
     nt.textContent=node.note||'';
     if(openId===node.id){
-      nt.contentEditable='true';nt.spellcheck=false;
+      nt.contentEditable='true';nt.spellcheck=true;
       nt.dataset.note=node.id;
       if(!node.note)nt.setAttribute('data-ph','1');
-      nt.oninput=()=>{node.note=nt.textContent;touch(node);saveSoon()};
-      nt.onpaste=e=>{plainPaste(e,nt);node.note=nt.textContent;touch(node);saveSoon()};
+      /* a note keeps its lines: Enter is a new line in it; Shift+Enter goes back to the line */
+      const take=()=>{node.note=nt.innerText.replace(/\n+$/,'');touch(node);saveSoon();document.getElementById('undo').classList.remove('on')};
+      nt.oninput=take;
+      nt.onpaste=e=>{const cd=e.clipboardData||window.clipboardData;if(!cd)return;e.preventDefault();
+        const tx=clipText(cd);if(clipOnlyPicture(cd,tx))return;insertPlain(nt,tx);take()};
+      nt.onkeydown=e=>{
+        if(e.key==='Enter'&&e.shiftKey){e.preventDefault();noteFor=null;focus(node.id);return}
+        if(e.key==='Enter'&&!(e.ctrlKey||e.metaKey)){e.preventDefault();document.execCommand('insertLineBreak');take();return}
+        if(e.key==='Escape'){e.preventDefault();openId=null;noteFor=null;render();try{getSelection().removeAllRanges()}catch(err){}}};
       nt.onclick=e=>e.stopPropagation();
     }
-    if(node.note||openId===node.id)wrap.appendChild(nt);
+    wrap.appendChild(nt);
   }
 
-  if(openId===node.id)wrap.appendChild(ctlEl(node,parent,depth));
+  if(openId===node.id&&!desk())wrap.appendChild(ctlEl(node,parent,depth));
   if(has&&!node.collapsed){
     const kb=kidsEl(node,depth+1);
     /* the branch you are working in offers its next line; the rest stay quiet
@@ -1634,13 +1744,14 @@ function ctlEl(node,parent,depth){
     b.onmousedown=e=>e.preventDefault();
     b.onclick=e=>{e.stopPropagation();viaTray=true;try{fn()}finally{viaTray=false}};host.appendChild(b)};
   const pad=document.createElement('div');pad.className='pad';
+  const KEYS={Out:'Shift+Tab',In:'Tab',Up:'Alt+Shift+\u2191',Down:'Alt+Shift+\u2193'};
   [[ICO.out,'Out',()=>run('Tab',true)],[ICO.in,'In',()=>run('Tab',false)],['sp'],
    [ICO.up,'Up',()=>shift(node,parent,-1)],[ICO.down,'Down',()=>shift(node,parent,1)],['sp'],
    ['<span class="mvto">Move to\u2026</span>','Move to',()=>movePick(node),'mvtob'],
    ]
    .forEach(([html,lbl,fn,cls])=>{
      if(html==='sp'){pad.appendChild(Object.assign(document.createElement('div'),{className:'sp'}));return}
-     const b=document.createElement('button');b.innerHTML=html;b.title=lbl;
+     const b=document.createElement('button');b.innerHTML=html;b.title=lbl+(KEYS[lbl]?' ('+KEYS[lbl]+')':'');
      if(cls)b.className=cls;   /* (the bin keeps its own 'bin' class) */
      b.setAttribute('aria-label',lbl);
      b.onmousedown=e=>e.preventDefault();
@@ -1748,9 +1859,12 @@ function pasteInto(e,el,node,parent){
     t=t.replace(/^(?:[-*\u2022\u2023\u25E6\u00B7]|\d+[.)])\s+/,'');return {ind,t,done}};
   if(lines.length<=1){insertPlain(el,lines.length?clean(lines[0]).t:'');node.t=el.textContent;touch(node);saveSoon();return}
   const items=lines.map(clean);
-  insertPlain(el,items[0].t);node.t=el.textContent;touch(node);
+  /* with the caret at the end of a line that has words, every pasted line is a new line
+     below it; anywhere else the first pasted line goes in at the caret */
+  const orig=node.t||'',atEnd=!!orig&&caretOff(el)>=orig.length;
+  if(!atEnd){insertPlain(el,items[0].t);node.t=el.textContent;touch(node)}
   const made=[];let last=node;const st=[{ind:items[0].ind,n:node}];
-  items.slice(1).forEach(it=>{
+  (atEnd?items:items.slice(1)).forEach(it=>{
     const nn=nd(it.t,[],it.done?{done:true,doneAt:Date.now()}:{});
     while(st.length>1&&it.ind<=st[st.length-1].ind)st.pop();
     const top=st[st.length-1];
@@ -1758,13 +1872,19 @@ function pasteInto(e,el,node,parent){
     else{const sn=ordSnap(parent);parent.kids.splice(parent.kids.indexOf(last)+1,0,nn);placeOrd(parent,nn,sn);last=nn;st.length=0;st.push({ind:it.ind,n:nn})}
     made.push(nn);
   });
-  save();render();focus(node.id);
-  offerUndo('Pasted '+lines.length+' lines.',()=>{made.slice().reverse().forEach(m=>{const f=find(m.id);if(f)killNode(m,f.parent)})});
+  save();render();focus(atEnd&&made[0]?made[0].id:node.id);
+  offerUndo('Pasted '+lines.length+' lines.',()=>{made.slice().reverse().forEach(m=>{const f=find(m.id);if(f)killNode(m,f.parent)});
+    if(node.t!==orig){node.t=orig;touch(node)}});
 }
 
 /* it asks; it never blocks. a task you cannot save is a task you will not write. */
+const noteLine=s=>{const a=String(s||'').split('\n').filter(x=>x.trim());return a.length?a[0]+(a.length>1?'  \u2026':''):''};
+let noteFor=null;
+function focusNote(id){setTimeout(()=>{const nt=document.querySelector('.note[data-note="'+id+'"]');if(!nt)return;nt.focus();
+  const r=document.createRange(),sel=getSelection();r.selectNodeContents(nt);r.collapse(false);sel.removeAllRanges();sel.addRange(r)},30)}
 function nudgeCue(node){
   if(!askCue||node.note)return;
+  if(desk()){noteFor=node.id;render()}
   setTimeout(()=>{
     const nt=document.querySelector('.note[data-note="'+node.id+'"]');
     if(!nt)return;
@@ -1799,22 +1919,61 @@ function shift(node,parent,d){
 }
 
 /* ---------- outliner keyboard ---------- */
+function caretOff(el){const s=getSelection();if(!el||!s.rangeCount||!el.contains(s.anchorNode))return (el&&el.textContent||'').length;
+  const r=s.getRangeAt(0),pre=document.createRange();pre.selectNodeContents(el);pre.setEnd(r.startContainer,r.startOffset);return pre.toString().length}
+function focusOff(id,off){const el=document.querySelector(`.t[data-id="${id}"]`);if(!el)return;el.contentEditable='true';el.focus();
+  const tn=el.firstChild,s=getSelection(),r=document.createRange();
+  if(tn&&tn.nodeType===3)r.setStart(tn,Math.min(off,tn.length));else{r.selectNodeContents(el);r.collapse(off===0)}
+  r.collapse(true);s.removeAllRanges();s.addRange(r)}
 function key(e,node,parent){
   const i=parent.kids.indexOf(node);
+  const tx=document.querySelector(`.t[data-id="${node.id}"]`);
+  /* Shift+Enter: the line's note (Workflowy) */
+  if(e.key==='Enter'&&e.shiftKey&&!(e.ctrlKey||e.metaKey)){e.preventDefault();noteFor=node.id;openId=node.id;render();focusNote(node.id);return}
+  /* Ctrl/Cmd+↑ folds a line's parts away, Ctrl/Cmd+↓ opens them */
+  if((e.key==='ArrowUp'||e.key==='ArrowDown')&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey){e.preventDefault();
+    if(node.kids.length){node.collapsed=e.key==='ArrowUp';render();focus(node.id)}return}
+  /* zoom: Alt+→ (or Ctrl/Cmd+]) steps inside the line, Alt+← (or Ctrl/Cmd+[) steps back out */
+  if((e.altKey&&!e.shiftKey&&!e.ctrlKey&&e.key==='ArrowRight')||((e.ctrlKey||e.metaKey)&&e.key===']')){e.preventDefault();
+    node.collapsed=false;goTo(node.id);const first=node.kids[0];if(first){openId=first.id;render();focus(first.id)}return}
+  if((e.altKey&&!e.shiftKey&&!e.ctrlKey&&e.key==='ArrowLeft')||((e.ctrlKey||e.metaKey)&&e.key==='[')){e.preventDefault();
+    if(zoom!==ROOT.id){const z=find(zoom);goTo(z&&z.parent?z.parent.id:ROOT.id);openId=node.id;render();focus(node.id)}return}
+  /* Ctrl/Cmd+Shift+Backspace deletes the line (Undo brings it back) */
+  if((e.key==='Backspace'||e.key==='Delete')&&(e.ctrlKey||e.metaKey)&&e.shiftKey){e.preventDefault();
+    const prev=parent.kids[i-1]||null,k=removeLine(node,parent);openId=null;render();if(prev)focus(prev.id);
+    if(k)offerUndo('Deleted \u201C'+short(node.t)+'\u201D.',()=>{restoreLine(k.key)});return}
+  /* Backspace at the very start joins this line onto the one above */
+  if(e.key==='Backspace'&&node.t&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&i>0&&getSelection().isCollapsed&&caretOff(tx)===0){
+    const prev=parent.kids[i-1];
+    if(!prev.kids.length||prev.collapsed){e.preventDefault();
+      const join=(prev.t||'').length;prev.t=(prev.t||'')+node.t;
+      if(node.note)prev.note=(prev.note?prev.note+'\n':'')+node.note;
+      node.kids.slice().forEach(k=>{const sn=ordSnap(prev);prev.kids.push(k);placeOrd(prev,k,sn)});node.kids=[];
+      touch(prev);killNode(node,parent);openId=prev.id;render();focusOff(prev.id,join);return}}
+  if(e.key==='Escape'){e.preventDefault();openId=null;render();
+    const a=document.activeElement;if(a&&a.blur)a.blur();try{getSelection().removeAllRanges()}catch(err){}return}
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();
+    const was=isDone(node);finish(node);render();focus(node.id);
+    if(!was&&isDone(node))offerUndo('Done. \u201C'+short(node.t)+'\u201D',()=>{if(isDone(node))finish(node)});
+    return}
   if(e.key==='Enter'){
     e.preventDefault();
-    const sel=getSelection(), atStart = sel && sel.anchorOffset===0 && node.t;
-    if(atStart){            /* open a line ABOVE; this one drops down with its parts */
+    const off=caretOff(tx),t=node.t||'';
+    if(off===0&&t){            /* open a line ABOVE; this one drops down with its parts */
       const snap=ordSnap(parent),f=nd('');
       parent.kids.splice(i,0,f);placeOrd(parent,f,snap);
-      openId=node.id;render();focus(node.id);
+      openId=node.id;render();focusOff(node.id,0);
     }else{
-      const snap=ordSnap(parent),f=nd('');
-      parent.kids.splice(i+1,0,f);placeOrd(parent,f,snap);
-      openId=f.id;render();focus(f.id);
+      /* Enter splits the line at the caret: what is after it starts the next line.
+         At the end of a line whose parts are showing, the new line is its first part. */
+      const right=t.slice(off);if(right){node.t=t.slice(0,off);touch(node)}
+      const f=nd(right);
+      if(!right&&node.kids.length&&!node.collapsed){const snap=ordSnap(node);node.kids.unshift(f);placeOrd(node,f,snap)}
+      else{const snap=ordSnap(parent);parent.kids.splice(i+1,0,f);placeOrd(parent,f,snap)}
+      openId=f.id;render();focusOff(f.id,0);
     }
   }
-  if((e.key==='ArrowUp'||e.key==='ArrowDown')&&e.shiftKey&&(e.altKey||e.metaKey)){
+  if((e.key==='ArrowUp'||e.key==='ArrowDown')&&e.shiftKey&&(e.altKey||e.metaKey||e.ctrlKey)){
     e.preventDefault();shift(node,parent,e.key==='ArrowUp'?-1:1);
   }
   if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();
@@ -1852,6 +2011,18 @@ function run(k,shift){
   key({key:k,shiftKey:shift,preventDefault(){}},node,parent);
 }
 const coarse=()=>matchMedia('(pointer:coarse)').matches;
+/* a computer: a fine pointer and room for it (a narrow window still gets the phone layout) */
+const desk=()=>!coarse()&&innerWidth>760;
+/* words that teach: "tap" on a touch screen, "click" with a mouse */
+const teach=s=>coarse()?s:String(s).replace(/\bTapping\b/g,'Clicking').replace(/\bTap\b/g,'Click').replace(/\btapping\b/g,'clicking').replace(/\btap\b/g,'click');
+function focusAt(id,x,y){
+  const el=document.querySelector(`.t[data-id="${id}"]`);if(!el)return;
+  el.contentEditable='true';el.focus();
+  let r=null;try{r=document.caretRangeFromPoint?document.caretRangeFromPoint(x,y):null}catch(e){}
+  const s=getSelection();
+  if(r&&el.contains(r.startContainer)){s.removeAllRanges();s.addRange(r)}
+  else{const q=document.createRange();q.selectNodeContents(el);q.collapse(false);s.removeAllRanges();s.addRange(q)}
+}
 let viaTray=false;
 function focus(id){
   const el=document.querySelector(`.t[data-id="${id}"]`);if(!el)return;
@@ -2096,6 +2267,7 @@ function renderDo(){
     t.setAttribute('aria-label',fin0+' finished today. See what got finished');t.onclick=()=>document.getElementById('tally').click();bar.append(t)}
   bar.append(placeChip());
   L.appendChild(bar);
+  if(desk())L.appendChild(quickAddEl('Add something for today\u2026',0));
 
   const pool=pickedUp(S);
   const open=pool.filter(n=>!isDone(n));
@@ -2116,7 +2288,7 @@ function renderDo(){
     h.innerHTML='<div class="lead">If you only do one thing</div>'+
       (anc?'<div class="oanc">'+esc(anc)+'</div>':'')+
       '<div class="otitle">'+esc(one.node.t)+'</div>'+
-      (one.node.note?'<div class="ocue">↳  '+esc(one.node.note)+'</div>':'')+
+      (one.node.note?'<div class="ocue">↳  '+esc(noteLine(one.node.note))+'</div>':'')+
       '<div class="owhy">because '+esc(one.why)+'</div>';
     const x=document.createElement('button');x.className='ohide';x.innerHTML='&#10005;';
     x.setAttribute('aria-label','Hide this until tomorrow');x.title='Hide this until tomorrow';
@@ -2222,7 +2394,7 @@ function doItem(node){
   if(anc||via.length)main.insertAdjacentHTML('beforeend','<div class="dcrumb">'+esc(anc)+
     (via.length?(anc?' \u00b7 ':'')+'<span class="dostep">next step</span>':'')+'</div>');
   main.insertAdjacentHTML('beforeend','<div class="dtx">'+esc(node.t||'(untitled)')+'</div>');
-  if(node.note)main.insertAdjacentHTML('beforeend','<div class="dcue">↳  '+esc(node.note)+'</div>');
+  if(node.note)main.insertAdjacentHTML('beforeend','<div class="dcue">↳  '+esc(noteLine(node.note))+'</div>');
   const mk=document.createElement('div');mk.className='dmk';const ef=E(node);const bits=[];
   const alone=!ef.imp&&!(lab&&lab.cls==='late')&&!node.repeat;
   if(ef.urgent)bits.push('<span class="mk urg">⏱︎'+(alone?' urgent':'')+'</span>');
@@ -2394,22 +2566,33 @@ function quickAdd(raw,defDay){
    ============================================================ */
 let planLens='week';
 let planTrayShut=null;   /* null: decide by screen width */
-let planNotesOpen=false;
+let planNotesOpen=true,planNotesAll=false;
 const HINT=(()=>{try{return JSON.parse(localStorage.getItem('yodo.hints')||'{}')}catch(e){return {}}})(),hintSeen=new Set();
+if(HINT.notes==='shut')planNotesOpen=false;
 function hint(k){if(!hintSeen.has(k)){hintSeen.add(k);HINT[k]=(HINT[k]||0)+1;try{localStorage.setItem('yodo.hints',JSON.stringify(HINT))}catch(e){}}return HINT[k]<=4}
 const FRESH=new Set();let freshZoom=null,freshFlash=null;
 /* newest first, then the rest in their usual order */
 const freshFirst=a=>[...FRESH].reverse().map(id=>a.find(n=>n.id===id)).filter(Boolean).concat(a.filter(n=>!FRESH.has(n.id)));
 /* the folded group of notes at the foot of the tray (Week) or of Neither (Matrix) */
+/* NOTES: lines with no day and no mark, under nothing that has one. A section of their
+   own, open unless you fold it: the newest first, a dozen at a time. Drag one onto a day
+   or into a box to plan it. */
 function pNotes(c,S,l){
   if(!c.notes||!c.notes.length)return;
   const k=c.notes.length,b=document.createElement('button');b.className='pnotes';
   b.setAttribute('aria-expanded',String(planNotesOpen));
-  b.innerHTML='<span class="pna">'+(planNotesOpen?'\u25BE':'\u25B8')+'</span>Notes<span class="n">'+k+'</span>'+
-    '<span class="pnw">'+(planNotesOpen?'Hide':'lines with no day and no mark')+'</span>';
-  b.onclick=()=>{planNotesOpen=!planNotesOpen;render()};
+  b.innerHTML='<span class="pnt">Notes</span><span class="n">'+k+'</span>'+
+    '<span class="pnw">'+(planNotesOpen?'Hide':'Show')+'</span>';
+  b.onclick=()=>{planNotesOpen=!planNotesOpen;HINT.notes=planNotesOpen?'open':'shut';
+    try{localStorage.setItem('yodo.hints',JSON.stringify(HINT))}catch(e){};render()};
   l.appendChild(b);
-  if(planNotesOpen)c.notes.forEach(n=>l.appendChild(pCard(n,S,true)));
+  if(!planNotesOpen)return;
+  const list=c.notes.slice().sort((a,b)=>(b.touched||0)-(a.touched||0));
+  const shown=planNotesAll?list:list.slice(0,12);
+  shown.forEach(n=>l.appendChild(pCard(n,S,true)));
+  if(list.length>12){const m=document.createElement('button');m.className='pnmore';
+    m.textContent=planNotesAll?'Show fewer':'Show all '+list.length;
+    m.onclick=()=>{planNotesAll=!planNotesAll;render()};l.appendChild(m)}
 }
 function planScan(S,kind){
   const has=kind==='week'?n=>n.when!=null:n=>!!(n.urgent||n.imp);
@@ -2479,9 +2662,10 @@ function renderPlan(){
     b.onclick=()=>{planLens=k;save();render()};lens.appendChild(b)});
   bar.append(lens,placeChip());
   L.appendChild(bar);
+  if(desk())L.appendChild(quickAddEl(planLens==='week'?'Add a line\u2026 try \u201Ccall mum fri\u201D':'Add a line\u2026 end it with ! for urgent, * for important',null));
   if(hint('plan-'+planLens))L.insertAdjacentHTML('beforeend','<p class="plede">'+(planLens==='week'
-    ?'Drag a line onto the day you will do it. Tap a line for the same choices without dragging.'
-    :'Drag a line into a box to mark it, or tap it for the same choices. End a new line with ! for urgent, * for important.')+'</p>');
+    ?teach('Drag a line onto the day you will do it. Tap a line for the same choices without dragging.')
+    :teach('Drag a line into a box to mark it, or tap it for the same choices. End a new line with ! for urgent, * for important.'))+'</p>');
   if(!S.kids.length&&S!==ROOT){L.appendChild(leafHere(S));return}
   if(planLens==='matrix'){
     planCols=planCells(S);planCols.forEach(c=>c.items=freshFirst(c.items));
@@ -2492,9 +2676,13 @@ function renderPlan(){
     const cols=planColumns(S);
     planCols=cols.concat(...cols.filter(c=>c.slots).map(c=>c.slots));planCols.forEach(c=>c.items=freshFirst(c.items));
     const b=document.createElement('div');b.className='pboard';b.id='pboard';
+    /* Overdue to the left, the days in the middle, lines with no day to the right (on a
+       wide screen); one after another, in that order, on anything narrower */
+    const left=document.createElement('div');left.className='pleft';
     const days=document.createElement('div');days.className='pdays';
-    cols.forEach(c=>(c.rail?b:days).appendChild(pCol(c,S)));
-    b.appendChild(days);
+    const right=document.createElement('div');right.className='pright';
+    cols.forEach(c=>(c.key==='late'?left:c.rail?right:days).appendChild(pCol(c,S)));
+    b.append(left,days,right);
     L.appendChild(b);
   }
   /* small wins stay in sight */
@@ -2569,7 +2757,7 @@ function pCard(n,S,compact){
   if(planLens==='matrix'&&n.imp&&!n.urgent&&n.when==null)m.push('<span class="mk soft">no day yet</span>');
   el.innerHTML='<button class="ptick" aria-label="Finish '+esc(n.t)+'"></button><div class="ptx">'+
     (cr?'<div class="pcr">'+esc(cr)+'</div>':'')+'<div class="pt">'+esc(n.t||'(untitled)')+'</div>'+
-    (n.note?'<div class="pcue">↳ '+esc(n.note)+'</div>':'')+(m.length?'<div class="pmk">'+m.join('')+'</div>':'')+'</div>';
+    (n.note?'<div class="pcue">↳ '+esc(noteLine(n.note))+'</div>':'')+(m.length?'<div class="pmk">'+m.join('')+'</div>':'')+'</div>';
   if(n.kids.length){
     const open=[];(function w(x){x.kids.forEach(k=>{if(k.kids.length)w(k);else if(!k.done)open.push(k)})})(n);
     const box=document.createElement('div');box.className='pparts';
@@ -2845,12 +3033,98 @@ function openFind(){
     list.forEach(a=>{const b=document.createElement('button');b.className='findhit'+(a.n.done?' done':'');
       b.innerHTML=(a.tr.length?'<span class="fcr">'+esc(a.tr.join(' \u203A '))+'</span>':'')+
         '<span class="ft">'+hl(a.n.t||'(untitled)',q)+(a.n.kids.length?' <i>\u00b7 '+a.n.kids.length+'</i>':'')+'</span>'+
-        (a.n.note?'<span class="fcue">\u21B3 '+hl(a.n.note,q)+'</span>':'');
+        (a.n.note?'<span class="fcue">\u21B3 '+hl(a.n.note.replace(/\s*\n\s*/g,' \u00b7 '),q)+'</span>':'');
       b.onclick=()=>reveal(a.n);res.appendChild(b)})};
   inp.oninput=show;
-  inp.onkeydown=e=>{if(e.key==='Enter'){const h=res.querySelector('.findhit');if(h)h.click()}else if(e.key==='Escape')shutSheet()};
-  show();setTimeout(()=>inp.focus(),60);
+  let at=0;const mark=()=>{const h=[...res.querySelectorAll('.findhit')];h.forEach((x,i)=>x.classList.toggle('sel',i===at));
+    if(h[at])h[at].scrollIntoView({block:'nearest'})};
+  inp.addEventListener('input',()=>{at=0;mark()});
+  inp.onkeydown=e=>{const h=[...res.querySelectorAll('.findhit')];
+    if(e.key==='ArrowDown'&&h.length){e.preventDefault();at=Math.min(h.length-1,at+1);mark()}
+    else if(e.key==='ArrowUp'&&h.length){e.preventDefault();at=Math.max(0,at-1);mark()}
+    else if(e.key==='Enter'){if(h[at])h[at].click()}else if(e.key==='Escape')shutSheet()};
+  show();mark();setTimeout(()=>inp.focus(),60);
 }
+/* PASTE ANYWHERE. With no line being written, Ctrl/Cmd+V adds what you copied as lines:
+   in Map after the open line (or at the end of where you are), in Plan and Do into the
+   Inbox or the place you are in. Indented text keeps its shape. */
+document.addEventListener('paste',e=>{
+  if(e.defaultPrevented||isEdit(e.target)||sheet.classList.contains('on'))return;
+  const cd=e.clipboardData||window.clipboardData;if(!cd)return;
+  const text=clipText(cd);if(!text.trim()){clipOnlyPicture(cd,text);return}
+  e.preventDefault();
+  if(mode==='map'){
+    const of=openId&&find(openId),parent=of?of.parent:here(),before=new Set();
+    (function w(x){x.kids.forEach(k=>{before.add(k.id);w(k)})})(ROOT);
+    const f=nd(''),snap=ordSnap(parent);
+    if(of)parent.kids.splice(parent.kids.indexOf(of.node)+1,0,f);else parent.kids.push(f);placeOrd(parent,f,snap);
+    openId=f.id;render();const tx=document.querySelector('.t[data-id="'+f.id+'"]');
+    tx.contentEditable='true';tx.focus();pasteInto(e,tx,f,parent);
+    const made=[];(function w(x){x.kids.forEach(k=>{if(!before.has(k.id))made.push(k);w(k)})})(ROOT);
+    if(!f.t&&!f.kids.length&&made.length===1){killNode(f,parent);render();return}
+    offerUndo('Pasted '+(made.length===1?'a line':made.length+' lines')+'.',()=>{made.slice().reverse().forEach(m=>{const g=find(m.id);if(g)g.parent.kids.splice(g.parent.kids.indexOf(m),1)})});
+    return}
+  const lines=text.split('\n').map(x=>x.replace(/^\s*(?:[-*\u2022]|\d+[.)])?\s*(?:\[[ xX]\]\s*)?/,'').trim()).filter(Boolean);
+  addOpen=true;let made=[];try{made=lines.map(l=>quickAdd(l,mode==='do'?0:null))}finally{addOpen=false}
+  const where=here()===ROOT?'the Inbox':'\u201C'+short(here().t||'(untitled)')+'\u201D';
+  offerUndo('Pasted '+(made.length===1?'a line':made.length+' lines')+' into '+where+'.',()=>{made.forEach(m=>{const g=find(m.id);if(g)g.parent.kids.splice(g.parent.kids.indexOf(m),1)})});
+});
+/* COPY A WHOLE LINE. In a line with nothing selected, Ctrl/Cmd+C copies the line and its
+   parts as an indented outline (paste it anywhere, or back into Yodo, and it keeps its shape). */
+function outlineText(n,d){return '  '.repeat(d)+(n.done?'[x] ':'')+(n.t||'')+
+  (n.note?n.note.split('\n').map(l=>'\n'+'  '.repeat(d+1)+'\u21B3 '+l).join(''):'')+n.kids.map(k=>'\n'+outlineText(k,d+1)).join('')}
+document.addEventListener('copy',e=>{
+  const el=document.activeElement;if(!el||!el.classList||!el.classList.contains('t')||!el.dataset.id)return;
+  const s=getSelection();if(s&&!s.isCollapsed)return;
+  const f=find(el.dataset.id);if(!f)return;
+  e.clipboardData.setData('text/plain',outlineText(f.node,0));e.preventDefault();
+  const k=stats(f.node).total-(f.node.kids.length?0:1);
+  toastLine('Copied \u201C'+short(f.node.t||'(untitled)')+'\u201D'+(f.node.kids.length?' with its '+k+' part'+(k===1?'':'s'):'')+'.');
+});
+/* Escape closes an open line, wherever the focus is */
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||sheet.classList.contains('on')||isEdit(e.target))return;
+  if(openId&&mode==='map'){openId=null;render();try{getSelection().removeAllRanges()}catch(err){}}});
+/* MAP: drag a line by its grip (it shows at the left of a line on hover). A thin rule
+   shows where it will land: above or below a line, or as the first part of an open one. */
+let mdrag=null;
+function mapDragStart(e,node,wrap){if(e.button!==0)return;e.preventDefault();e.stopPropagation();
+  mdrag={node,wrap,x0:e.clientX,y0:e.clientY,id:e.pointerId,live:false,target:null}}
+window.addEventListener('pointermove',e=>{
+  if(!mdrag||e.pointerId!==mdrag.id)return;
+  if(!mdrag.live){if(Math.hypot(e.clientX-mdrag.x0,e.clientY-mdrag.y0)<4)return;
+    mdrag.live=true;mdrag.wrap.classList.add('mlift');document.body.classList.add('mdragging');
+    const ind=document.createElement('div');ind.className='mind';document.body.appendChild(ind);mdrag.ind=ind}
+  e.preventDefault();
+  const inside=id=>{let c=find(id);while(c){if(c.node===mdrag.node)return true;c=c.parent?find(c.parent.id):null}return false};
+  const rows=[...document.querySelectorAll('#tree .t[data-id]')];let best=null;
+  for(const t of rows){const r=t.closest('.row').getBoundingClientRect();
+    if(e.clientY>=r.top&&e.clientY<=r.bottom){best={t,r};break}}
+  if(!best){mdrag.target=null;mdrag.ind.style.display='none';}
+  else if(inside(best.t.dataset.id)){mdrag.target=null;mdrag.ind.style.display='none'}
+  else{const after=e.clientY>best.r.top+best.r.height/2,f=find(best.t.dataset.id);
+    const intoFirst=after&&f.node.kids.length&&!f.node.collapsed;
+    mdrag.target={id:best.t.dataset.id,after,intoFirst};
+    const tr=best.t.getBoundingClientRect(),x=intoFirst?tr.left+24:tr.left;
+    Object.assign(mdrag.ind.style,{display:'block',left:x+'px',width:Math.max(80,best.r.right-x)+'px',top:((after?best.r.bottom:best.r.top)-1)+'px'})}
+  if(e.clientY<80)window.scrollBy(0,-10);else if(e.clientY>innerHeight-60)window.scrollBy(0,10);
+},{passive:false});
+window.addEventListener('pointerup',e=>{
+  if(!mdrag||e.pointerId!==mdrag.id)return;const d=mdrag;mdrag=null;
+  document.body.classList.remove('mdragging');d.wrap.classList.remove('mlift');if(d.ind)d.ind.remove();
+  if(!d.live||!d.target)return;
+  const from=find(d.node.id),tg=find(d.target.id);if(!from||!tg)return;
+  const oldP=from.parent,oldI=oldP.kids.indexOf(d.node);
+  let np,ni;
+  if(d.target.intoFirst){np=tg.node;ni=0}else{np=tg.parent;ni=np.kids.indexOf(tg.node)+(d.target.after?1:0)}
+  if(np===oldP&&(ni===oldI||ni===oldI+1))return;
+  oldP.kids.splice(oldI,1);if(np===oldP&&ni>oldI)ni--;
+  const snap=ordSnap(np);np.kids.splice(ni,0,d.node);placeOrd(np,d.node,snap);np.collapsed=false;
+  save();render();
+  offerUndo('Moved \u201C'+short(d.node.t)+'\u201D.',()=>{const f=find(d.node.id);if(!f)return;f.parent.kids.splice(f.parent.kids.indexOf(d.node),1);
+    const sn=ordSnap(oldP);oldP.kids.splice(Math.min(oldI,oldP.kids.length),0,d.node);placeOrd(oldP,d.node,sn)});
+});
+window.addEventListener('pointercancel',()=>{if(!mdrag)return;document.body.classList.remove('mdragging');mdrag.wrap.classList.remove('mlift');if(mdrag.ind)mdrag.ind.remove();mdrag=null});
 /* typing on a phone: the bottom controls step away until the keyboard goes */
 const isEdit=t=>!!(t&&t.closest&&t.closest('input,textarea,[contenteditable="true"]'));
 function typingNow(){const on=coarse()&&(isEdit(document.activeElement)||
@@ -3253,15 +3527,18 @@ document.getElementById('gear').onclick=()=>{
   a1.onclick=()=>{sheet.classList.remove('on');startIntro()};
   again.appendChild(a1);sin.appendChild(again);
   sin.insertAdjacentHTML('beforeend',
-    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 33</div>');
+    '<div style="margin-top:22px;font-size:11.5px;color:var(--faint)">Yodo \u00b7 alpha 35</div>');
   const done=document.createElement('button');done.className='sdone';done.textContent='Done';
   done.onclick=shutSheet;sin.appendChild(done);
   sheet.classList.add('on');
 };
 
 document.addEventListener('keydown',e=>{
+  /* Ctrl/Cmd+Z undoes the last action while its message shows; in a line you are typing in,
+     once the message has gone (typing dismisses it), it is the browser's own undo of your typing */
+  const toastOn=document.getElementById('undo').classList.contains('on');
   if((e.key==='z'||e.key==='Z')&&(e.metaKey||e.ctrlKey)&&!e.shiftKey&&undoFn
-     &&!(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName))){
+     &&!(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName))&&(toastOn||!isEdit(e.target))){
     e.preventDefault();undoFn();undoFn=null;
     document.getElementById('undo').classList.remove('on');render();
   }
@@ -3315,7 +3592,7 @@ let slide=0;
 function paintIntro(){
   const S=SLIDES[slide];
   document.getElementById('in-card').innerHTML=
-    '<div class="mark">'+S.m+'</div><h2>'+S.h+'</h2><p>'+S.p+'</p>'+
+    '<div class="mark">'+S.m+'</div><h2>'+S.h+'</h2><p>'+teach(S.p)+'</p>'+
     (S.d?'<div class="demo">'+S.d+'</div>':'');
   document.getElementById('in-dots').innerHTML=
     SLIDES.map((_,i)=>'<i class="'+(i===slide?'on':'')+'"></i>').join('');
@@ -3360,7 +3637,7 @@ function paintCoach(){
   spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
 
   const tip=document.getElementById('tip');
-  tip.innerHTML='<h4>'+C.h+'</h4><p>'+C.p+'</p><div class="row2">'+
+  tip.innerHTML='<h4>'+C.h+'</h4><p>'+teach(C.p)+'</p><div class="row2">'+
     '<span class="n">'+(coachAt+1)+' of '+COACH.length+'</span>'+
     '<button class="later" id="c-skip">Not now</button>'+
     '<button id="c-next">'+(coachAt===COACH.length-1?'Done':'Next')+'</button></div>';
